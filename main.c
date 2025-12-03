@@ -552,7 +552,7 @@ static BOOL HandleCommandLine(LPTSTR cmdline)
 /***********************************************************************
  *           WinMain
  */
-int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE prev, LPTSTR cmdline, int show)
+int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
     HACCEL hAccel;
@@ -571,7 +571,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE prev, LPTSTR cmdline, int sh
         break;
     }
 
-    UNREFERENCED_PARAMETER(prev);
+    UNREFERENCED_PARAMETER(hPrevInstance);
 
     aFINDMSGSTRING = (ATOM)RegisterWindowMessage(FINDMSGSTRING);
 
@@ -623,14 +623,14 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE prev, LPTSTR cmdline, int sh
         GetWindowPlacement(Globals.hMainWnd, &wp);
     }
     /* Does the parent process want to force a show action? */
-    if (show != SW_SHOWDEFAULT)
+    if (nCmdShow != SW_SHOWDEFAULT)
     {
-        wp.showCmd = show;
+        wp.showCmd = nCmdShow;
     }
     SetWindowPlacement(Globals.hMainWnd, &wp);
     UpdateWindow(Globals.hMainWnd);
 
-    if (!HandleCommandLine(cmdline))
+    if (!HandleCommandLine(lpCmdLine))
         return 0;
 
     hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(ID_ACCEL));
