@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write  # Required for release creation
+  contents: write  # Required for release creation and uploading assets
 
 jobs:
   build:
@@ -19,12 +19,12 @@ jobs:
         uses: actions/checkout@v3
 
       # Step 2: Install cross-compile dependencies
-      - name: Install MinGW-w64
+      - name: Install MinGW-w64 and zip
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64 zip
 
-      # Step 3: Build NotepadLite using Makefile
+      # Step 3: Build NotepadLite
       - name: Build NotepadLite
         run: make
 
@@ -35,12 +35,12 @@ jobs:
           name: NotepadLite-build
           path: build/bin/NotepadLite.exe
 
-      # Step 5: Package source code only
+      # Step 5: Package source code (exclude build and git folders)
       - name: Package source code
         run: |
           zip -r NotepadLite-source.zip . -x "build/*" ".git/*"
 
-      - name: Upload source code
+      - name: Upload source code artifact
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-source
@@ -51,6 +51,8 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: v1.0.0-${{ github.sha_short }}
+          name: NotepadLite Release ${{ github.sha_short }}
           artifacts: |
             build/bin/NotepadLite.exe
             NotepadLite-source.zip
+          generate_release_notes: true
