@@ -1,0 +1,40 @@
+name: Build NotepadLite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Install cross-compile dependencies
+      - name: Install MinGW-w64
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64
+
+      # Step 3: Build project using Makefile
+      - name: Build NotepadLite
+        run: make -C ./
+
+      # Step 4: Upload build artifacts
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: NotepadLite-build
+          path: notepad.exe
+
+      # Step 5: Create GitHub release with compiled binaries
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.sha }}
+          artifacts: notepad.exe
