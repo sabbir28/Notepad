@@ -1,33 +1,64 @@
-CC      = x86_64-w64-mingw32-gcc
-LD      = x86_64-w64-mingw32-ld
-WINDRES = x86_64-w64-mingw32-windres
+# ===============================
+# NotepadLite Makefile
+# ===============================
 
-CFLAGS  = -O2 -Wall -Wextra -DUNICODE -D_UNICODE -municode -mwindows
-LDFLAGS = -mwindows -nostartfiles -e _WinMain@16
+# Compiler and Tools
+CC      := i686-w64-mingw32-gcc
+WINDRES := i686-w64-mingw32-windres
 
-LIBS    = -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -ladvapi32 -lshell32 -lkernel32 -lmsvcrt
+# Directories
+SRC_DIR := src
+OBJ_DIR := build/obj
+BIN_DIR := build/bin
+RES_DIR := resources
 
-SRC = src/file_io.c src/main.c src/ui.c
-OBJ = $(SRC:.c=.o)
+# Source, Object, and Resource Files
+SRC := $(SRC_DIR)/main.c $(SRC_DIR)/ui.c $(SRC_DIR)/file_io.c
+OBJ := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
+RES := $(RES_DIR)/notepadlite.rc
+RES_OBJ := $(OBJ_DIR)/notepadlite_res.o
 
-TARGET = build/bin/notepad.exe
+# Compiler Flags
+CFLAGS := -Os -s -Wall -Wextra -Werror \
+          -DUNICODE -D_UNICODE -municode \
+          -ffunction-sections -fdata-sections \
+          -fno-ident -fno-asynchronous-unwind-tables \
+          -Iinclude
 
-all: $(TARGET)
+# Linker Flags
+LDFLAGS := -s -municode -mwindows \
+           -Wl,--gc-sections \
+           -Wl,--strip-all \
+           -Wl,--build-id=none \
+           -Wl,--no-insert-timestamp \
+           -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -lshell32
 
-$(TARGET): $(OBJ) rsrc.o
-	@mkdir -p build/bin
-	$(CC) $(OBJ) rsrc.o -o $@ $(LDFLAGS) $(LIBS)
+# ===============================
+# Targets
+# ===============================
 
-rsrc.o: resources/notepadlite.rc include/notepad.h
-	$(WINDRES) $< -O coff -o $@
+# Default target
+all: $(BIN_DIR)/NotepadLite.exe
 
-%.o: %.c include/notepad.h
+# Compile C source files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile resource file
+$(RES_OBJ): $(RES) | $(OBJ_DIR)
+	$(WINDRES) -Iinclude $< -O coff -o $@
+
+# Link executable
+$(BIN_DIR)/NotepadLite.exe: $(OBJ) $(RES_OBJ) | $(BIN_DIR)
+	$(CC) $(OBJ) $(RES_OBJ) $(LDFLAGS) -o $@
+
+# Create necessary directories
+$(OBJ_DIR) $(BIN_DIR):
+	mkdir -p $@
+
+# Clean build files
 clean:
-	rm -f $(OBJ) rsrc.o $(TARGET)
+	rm -rf $(OBJ_DIR)/* $(BIN_DIR)/*
 
-strip: $(TARGET)
-	x86_64-w64-mingw32-strip $(TARGET)
-
-.PHONY: all clean strip
+# Phony targets
+.PHONY: all clean
