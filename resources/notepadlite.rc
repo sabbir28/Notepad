@@ -1,0 +1,77 @@
+// NotepadLite Resource File
+#include "resource.h"
+
+// Application Icon
+IDR_MAINICON ICON "res/notepad.ico"
+
+// Menu Definition
+IDR_MYMENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",        IDM_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",    IDM_FILE_OPEN
+        MENUITEM "&Save\tCtrl+S",       IDM_FILE_SAVE
+        MENUITEM "Save &As...\tCtrl+Shift+S", IDM_FILE_SAVEAS
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",               IDM_FILE_EXIT
+    END
+
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Undo\tCtrl+Z",       IDM_EDIT_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "Cu&t\tCtrl+X",        IDM_EDIT_CUT
+        MENUITEM "&Copy\tCtrl+C",       IDM_EDIT_COPY
+        MENUITEM "&Paste\tCtrl+V",      IDM_EDIT_PASTE
+        MENUITEM "Select &All\tCtrl+A", IDM_EDIT_SELECT
+    END
+
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Always on Top\tCtrl+T", IDM_TOGGLE_ALWAYSONTOP
+    END
+END
+
+// Accelerator Table
+IDR_ACCELERATORS ACCELERATORS
+BEGIN
+    "^N", IDM_FILE_NEW,           VIRTKEY, NOINVERT
+    "^O", IDM_FILE_OPEN,          VIRTKEY, NOINVERT
+    "^S", IDM_FILE_SAVE,          VIRTKEY, NOINVERT
+    "+^S", IDM_FILE_SAVEAS,       VIRTKEY, NOINVERT   // Ctrl+Shift+S
+    "^Z", IDM_EDIT_UNDO,          VIRTKEY, NOINVERT
+    "^X", IDM_EDIT_CUT,           VIRTKEY, NOINVERT
+    "^C", IDM_EDIT_COPY,          VIRTKEY, NOINVERT
+    "^V", IDM_EDIT_PASTE,         VIRTKEY, NOINVERT
+    "^A", IDM_EDIT_SELECT,        VIRTKEY, NOINVERT
+    "^T", IDM_TOGGLE_ALWAYSONTOP, VIRTKEY, NOINVERT   // Ctrl+T
+END
+
+// Version Information (MinGW-compatible)
+1 VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x3F
+ FILEFLAGS 0x0
+ FILEOS 0x4 // VOS__WINDOWS32
+ FILETYPE 0x1 // VFT_APP
+ BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName",      "SABBIR28"
+            VALUE "FileDescription",  "Lightweight Text Editor"
+            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "InternalName",     "NotepadLite"
+            VALUE "OriginalFilename", "NotepadLite.exe"
+            VALUE "ProductName",      "NotepadLite"
+            VALUE "ProductVersion",   "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END
