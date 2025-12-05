@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write  # Required for release creation and uploading assets
+  contents: write  # Required for creating releases and uploading artifacts
 
 jobs:
   build:
@@ -35,7 +35,7 @@ jobs:
           name: NotepadLite-build
           path: build/bin/NotepadLite.exe
 
-      # Step 5: Package source code (exclude build and git folders)
+      # Step 5: Package source code only (exclude build and .git)
       - name: Package source code
         run: |
           zip -r NotepadLite-source.zip . -x "build/*" ".git/*"
@@ -46,13 +46,13 @@ jobs:
           name: NotepadLite-source
           path: NotepadLite-source.zip
 
-      # Step 6: Create GitHub release
+      # Step 6: Create GitHub release with valid tag and release notes
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          tag: v1.0.0-${{ github.sha_short }}
-          name: NotepadLite Release ${{ github.sha_short }}
+          tag: v1.0.0-${{ github.run_number }}
+          name: NotepadLite Release ${{ github.run_number }}
           artifacts: |
             build/bin/NotepadLite.exe
             NotepadLite-source.zip
-          generate_release_notes: true
+          generateReleaseNotes: true
