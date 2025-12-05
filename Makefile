@@ -7,20 +7,21 @@ LDFLAGS = -mwindows -nostartfiles -e _WinMain@16
 
 LIBS    = -luser32 -lgdi32 -lcomctl32 -lcomdlg32 -ladvapi32 -lshell32 -lkernel32 -lmsvcrt
 
-SRC = dialog.c main.c printing.c settings.c text.c
+SRC = src/file_io.c src/main.c src/ui.c
 OBJ = $(SRC:.c=.o)
 
-TARGET = notepad.exe
+TARGET = build/bin/notepad.exe
 
 all: $(TARGET)
 
 $(TARGET): $(OBJ) rsrc.o
+	@mkdir -p build/bin
 	$(CC) $(OBJ) rsrc.o -o $@ $(LDFLAGS) $(LIBS)
 
-rsrc.o: rsrc.rc notepad.h
+rsrc.o: resources/notepadlite.rc include/notepad.h
 	$(WINDRES) $< -O coff -o $@
 
-%.o: %.c notepad.h
+%.o: %.c include/notepad.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
