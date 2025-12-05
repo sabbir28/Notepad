@@ -6,35 +6,51 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write  # Required for creating releases and uploading artifacts
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
       # Step 2: Install cross-compile dependencies
-      - name: Install MinGW-w64
+      - name: Install MinGW-w64 and zip
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64
-
-      # Step 3: Build project using Makefile
+          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64 zip
+      # Step 3: Build NotepadLite
       - name: Build NotepadLite
         run: make
 
-      # Step 4: Upload build artifacts
-      - name: Upload build artifacts
+      # Step 4: Upload compiled binary
+      - name: Upload compiled binary
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-build
-          path: notepad.exe
+          path: build/bin/NotepadLite.exe
 
-      # Step 5: Create GitHub release with compiled binaries
+      # Step 5: Package source code only (exclude build and .git)
+      - name: Package source code
+        run: |
+          zip -r NotepadLite-source.zip . -x "build/*" ".git/*"
+      - name: Upload source code artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NotepadLite-source
+          path: NotepadLite-source.zip
+
+      # Step 6: Create GitHub release with valid tag and release notes
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.sha }}
-          artifacts: notepad.exe
+          tag: v1.0.0-${{ github.run_number }}
+          name: NotepadLite Release ${{ github.run_number }}
+          artifacts: |
+            build/bin/NotepadLite.exe
+            NotepadLite-source.zip
+          generateReleaseNotes: true
