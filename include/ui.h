@@ -5,7 +5,7 @@
 #include "resource.h"
 
 /* Starts the main UI loop */
-int ui_run(HINSTANCE hInst, int show);
+int ui_run(HINSTANCE hInst, int nCmdShow, LPCWSTR startup_path);
 
 /* Global editor handle for future features */
 extern HWND g_editor;

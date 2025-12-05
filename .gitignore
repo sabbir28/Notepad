@@ -1,0 +1,88 @@
+# ============================
+# Core build outputs
+# ============================
+*.obj
+*.o
+*.lo
+*.la
+*.a
+*.lib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.idb
+*.manifest
+
+# ============================
+# Compiled resources
+# ============================
+*.res
+*.rc~
+*.aps
+
+# ============================
+# Toolchain noise (MinGW / MSYS2 / clang)
+# ============================
+*.d
+*.gcda
+*.gcno
+*.gcov
+
+# ============================
+# CMake
+# ============================
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+build/
+out/
+bin/
+obj/
+
+# ============================
+# Visual Studio / VS Code
+# ============================
+.vscode/
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.*
+*.user
+*.opendb
+*.tlog
+
+# ============================
+# Packaging
+# ============================
+*.zip
+*.7z
+*.tar
+*.gz
+
+# ============================
+# Logs / temp
+# ============================
+*.log
+*.tmp
+*.temp
+*.bak
+
+# ============================
+# OS noise
+# ============================
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ============================
+# IDE-generated code nav
+# ============================
+*.browse.VC.db
+*.sdf
+*.sqlite
+
