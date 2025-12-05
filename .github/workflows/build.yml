@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: write  # Needed for release creation
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,22 +22,33 @@ jobs:
       - name: Install MinGW-w64
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64
+          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64 zip
 
       # Step 3: Build project using Makefile
       - name: Build NotepadLite
         run: make
 
-      # Step 4: Upload build artifacts
-      - name: Upload build artifacts
+      # Step 4: Upload compiled binary
+      - name: Upload compiled binary
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-build
-          path: notepad.exe
+          path: build/bin/NotepadLite.exe
 
-      # Step 5: Create GitHub release with compiled binaries
+      # Step 5: Package and upload source code
+      - name: Package source code
+        run: zip -r NotepadLite-source.zip . -x "build/*"
+      - name: Upload source code
+        uses: actions/upload-artifact@v4
+        with:
+          name: NotepadLite-source
+          path: NotepadLite-source.zip
+
+      # Step 6: Create GitHub release with compiled binary and source
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.sha }}
-          artifacts: notepad.exe
+          artifacts: |
+            build/bin/NotepadLite.exe
+            NotepadLite-source.zip
