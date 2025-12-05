@@ -7,14 +7,14 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write  # Needed for release creation
+  contents: write  # Required for release creation
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -24,7 +24,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64 zip
 
-      # Step 3: Build project using Makefile
+      # Step 3: Build NotepadLite using Makefile
       - name: Build NotepadLite
         run: make
 
@@ -35,20 +35,22 @@ jobs:
           name: NotepadLite-build
           path: build/bin/NotepadLite.exe
 
-      # Step 5: Package and upload source code
+      # Step 5: Package source code only
       - name: Package source code
-        run: zip -r NotepadLite-source.zip . -x "build/*"
+        run: |
+          zip -r NotepadLite-source.zip . -x "build/*" ".git/*"
+
       - name: Upload source code
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-source
           path: NotepadLite-source.zip
 
-      # Step 6: Create GitHub release with compiled binary and source
+      # Step 6: Create GitHub release
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ github.sha }}
+          tag: v1.0.0-${{ github.sha_short }}
           artifacts: |
             build/bin/NotepadLite.exe
             NotepadLite-source.zip
