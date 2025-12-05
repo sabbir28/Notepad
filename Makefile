@@ -14,7 +14,6 @@ TARGET = notepad.exe
 
 all: $(TARGET)
 
-# THIS IS THE KEY LINE — bypass the broken crtexewin.o completely
 $(TARGET): $(OBJ) rsrc.o
 	$(CC) $(OBJ) rsrc.o -o $@ $(LDFLAGS) $(LIBS)
 
