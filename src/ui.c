@@ -11,7 +11,7 @@ HWND g_editor                       = NULL;
 FILE_ENCODING g_currentFileEncoding = ENC_ANSI;
 WCHAR text_path[MAX_PATH_LEN]       = {0};
 
-int ui_run(HINSTANCE hInst, int show)
+int ui_run(HINSTANCE hInst, int nCmdShow, LPCWSTR startup_path)
 {
     LoadLibraryW(L"Msftedit.dll");  // RICHEDIT50W
 
@@ -34,11 +34,11 @@ int ui_run(HINSTANCE hInst, int show)
         L"NotepadLite",
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT, CW_USEDEFAULT, 900, 650,
-        NULL, NULL, hInst, NULL
+        NULL, NULL, hInst, (LPVOID)startup_path
     );
     if (!hwnd) return -1;
 
-    ShowWindow(hwnd, show);
+    ShowWindow(hwnd, nCmdShow);
     UpdateWindow(hwnd);
 
     HACCEL hAccel = LoadAcceleratorsW(hInst, MAKEINTRESOURCE(IDR_ACCELERATORS));
@@ -57,12 +57,49 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg) {
     case WM_CREATE:
+    {
         ui_add_editor(hwnd);
+        
+        HMENU hMenu = LoadMenuW(((LPCREATESTRUCT)lp)->hInstance, MAKEINTRESOURCE(IDR_MYMENU));
+            
+        if (hMenu) 
         {
-            HMENU hMenu = LoadMenuW(((LPCREATESTRUCT)lp)->hInstance, MAKEINTRESOURCE(IDR_MYMENU));
-            if (hMenu) SetMenu(hwnd, hMenu);
+            SetMenu(hwnd, hMenu);
         }
+
+        // Startup file open process
+        CREATESTRUCTW *cs = (CREATESTRUCTW *)lp;
+        LPCWSTR startup = (LPCWSTR)cs->lpCreateParams;
+
+        if (startup && startup[0] != L'\0') {
+
+            // Sync active path
+            wcscpy_s(text_path, MAX_PATH_LEN, startup);
+
+            // orchestrate your open pipeline here
+            LPWSTR fileBuffer = NULL;
+            DWORD fileSize    = 0;
+            FILE_ENCODING enc = file_detect_encoding(startup);
+
+            if (file_read(hwnd, startup, &fileBuffer, &fileSize, &enc))
+            {
+                SetWindowTextW(g_editor, fileBuffer);
+                g_currentFileEncoding = enc;
+
+                // Free fileBuffer after use
+                HeapFree(GetProcessHeap(), 0, fileBuffer);
+            }
+            else
+            {
+                MessageBoxW(hwnd,L"Failed to read file.",L"Error",MB_OK | MB_ICONERROR);
+                
+                // Reset path on failure
+                text_path[0] = L'\0';
+            }
+        }
+
         return 0;
+    }
 
     case WM_SIZE:
         if (g_editor) MoveWindow(g_editor, 0, 0, LOWORD(lp), HIWORD(lp), TRUE);
