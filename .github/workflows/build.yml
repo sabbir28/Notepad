@@ -23,7 +23,7 @@ jobs:
 
       # Step 3: Build project using Makefile
       - name: Build NotepadLite
-        run: make -C ./
+        run: make
 
       # Step 4: Upload build artifacts
       - name: Upload build artifacts
