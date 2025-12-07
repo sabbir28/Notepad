@@ -19,4 +19,8 @@
 #define IDR_ACCELERATORS    302
 #define IDR_MAINICON        103
 
+// Status bar 
+#define ID_STATUSBAR 5000
+
+
 #endif /* RESOURCE_H */

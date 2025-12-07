@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 name: Build NotepadLite
 
 on:
@@ -36,66 +35,21 @@ jobs:
           name: NotepadLite-build
           path: build/bin/NotepadLite.exe
 
-      # Step 5: Package source code only (exclude build and .git)
-      - name: Package source code
+      # Step 5: Set dynamic version (YY:MM:BUILD_NUMBER)
+      - name: Set version
+        id: version
         run: |
-          zip -r NotepadLite-source.zip . -x "build/*" ".git/*"
+          YY=$(date +'%y')
+          MM=$(date +'%m')
+          VERSION="${YY}:${MM}:${GITHUB_RUN_NUMBER}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Upload source code artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: NotepadLite-source
-          path: NotepadLite-source.zip
-
-      # Step 6: Create GitHub release with valid tag and release notes
+      # Step 6: Create GitHub release using existing release.txt for notes
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          tag: v1.0.0-${{ github.run_number }}
-          name: NotepadLite Release ${{ github.run_number }}
-          artifacts: |
-            build/bin/NotepadLite.exe
-            NotepadLite-source.zip
-          generateReleaseNotes: true
-=======
-name: Build NotepadLite
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      # Step 1: Checkout the repository
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 2: Install cross-compile dependencies
-      - name: Install MinGW-w64
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64
-
-      # Step 3: Build project using Makefile
-      - name: Build NotepadLite
-        run: make
-
-      # Step 4: Upload build artifacts
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: NotepadLite-build
-          path: notepad.exe
-
-      # Step 5: Create GitHub release with compiled binaries
-      - name: Create Release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ github.sha }}
-          artifacts: notepad.exe
->>>>>>> b426cd2 (Activated drag-and-drop support, optimized existing code paths, and deployed a permanent Always-On-Top capability.)
+          tag: ${{ env.VERSION }}
+          name: "NotepadLite Release ${{ env.VERSION }}"
+          artifacts: build/bin/NotepadLite.exe
+          releaseNotes: |
+            $(cat D:/Progect/NotepadLite/release.txt)

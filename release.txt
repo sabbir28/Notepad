@@ -1,0 +1,2 @@
+- Add stastus bar
+- Fix some bug code
