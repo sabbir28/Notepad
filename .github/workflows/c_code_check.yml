@@ -48,7 +48,7 @@ jobs:
       # Step 5: Download Dr. Memory (memory leak detector)
       - name: Download Dr. Memory
         run: |
-          Invoke-WebRequest -Uri https://github.com/DynamoRIO/drmemory/releases/download/v2.4.0/drmemory-windows-2.4.0-1.zip -OutFile drmemory.zip
+          Invoke-WebRequest -Uri https://github.com/DynamoRIO/drmemory/releases/download/cronbuild-2.6.20368/DrMemory-Windows-2.6.20368.zip -OutFile drmemory.zip
           Expand-Archive drmemory.zip -DestinationPath drmemory
 
       # Step 6: Run NotepadLite.exe with Dr. Memory
