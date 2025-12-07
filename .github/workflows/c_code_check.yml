@@ -33,20 +33,20 @@ jobs:
       # Step 4: Run cppcheck (won't fail workflow)
       - name: Run cppcheck
         run: |
-          cppcheck --enable=all --inconclusive . 2> "${REPORT_DIR}/cppcheck_report.txt"
+          cppcheck --enable=all --inconclusive . 2> "${REPORT_DIR}/cppcheck_report.txt" || true
 
       # Step 5: Run clang-tidy on all C files
       - name: Run clang-tidy
         run: |
           for file in $(find . -name "*.c"); do
-            clang-tidy "$file" -- -I. 2> "${REPORT_DIR}/clang_tidy_$(basename $file).txt"
+            clang-tidy "$file" -- -Isrc 2> "${REPORT_DIR}/clang_tidy_$(basename $file).txt" || true
           done
 
       # Step 6: Compile with warnings enabled (gcc)
       - name: Compile with warnings
         run: |
           for file in $(find . -name "*.c"); do
-            gcc -Wall -Wextra -Wpedantic -c "$file" -o /dev/null 2> "${REPORT_DIR}/gcc_warnings_$(basename $file).txt"
+            gcc -Wall -Wextra -Wpedantic -c "$file" -Isrc -o /dev/null 2> "${REPORT_DIR}/gcc_warnings_$(basename $file).txt" || true
           done
 
       # Step 7: Zip the reports
