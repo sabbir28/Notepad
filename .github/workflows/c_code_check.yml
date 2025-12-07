@@ -15,11 +15,11 @@ jobs:
 
     env:
       REPORT_DIR: ""
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Download latest release executable (or your own built exe)
       - name: Download NotepadLite.exe
         shell: powershell
         run: |
@@ -28,7 +28,6 @@ jobs:
           Invoke-WebRequest -Uri $exeUrl -OutFile $exePath -UseBasicParsing
           Write-Host "Downloaded NotepadLite to $exePath"
 
-      # Download Dr. Memory zip
       - name: Download Dr. Memory
         shell: powershell
         run: |
@@ -38,7 +37,6 @@ jobs:
           Expand-Archive -LiteralPath $zip -DestinationPath "$env:GITHUB_WORKSPACE\drmemory"
           Write-Host "Extracted Dr. Memory"
 
-      # Prepare report directory
       - name: Prepare report folder
         shell: powershell
         run: |
@@ -46,19 +44,24 @@ jobs:
           $env:REPORT_DIR = "reports_$today"
           New-Item -ItemType Directory -Path $env:REPORT_DIR
 
-      # Run Dr. Memory
       - name: Run memory analysis
         shell: powershell
         run: |
           $exe = "$env:GITHUB_WORKSPACE\NotepadLite.exe"
-          $drExe = "$env:GITHUB_WORKSPACE\drmemory\drmemory-windows\bin64\drmemory.exe"
-          if (-Not (Test-Path $drExe)) {
-            $drExe = "$env:GITHUB_WORKSPACE\drmemory\bin64\drmemory.exe"
+
+          # Identify Dr. Memory folder dynamically
+          $drRoot = Get-ChildItem "$env:GITHUB_WORKSPACE\drmemory" -Directory | Select-Object -First 1
+          $drExe = Join-Path $drRoot.FullName "bin64\drmemory.exe"
+
+          if (-not (Test-Path $drExe)) {
+            Write-Host "Dr. Memory executable not found at: $drExe"
+            Write-Error "DrMemory.exe missing. Check extraction folder."
+            exit 1
           }
+
           Write-Host "Running Dr. Memory: $drExe on $exe"
           & $drExe -batch -report_dir $env:REPORT_DIR $exe
 
-      # Upload report as artifact
       - name: Upload memory report
         uses: actions/upload-artifact@v4
         with:
