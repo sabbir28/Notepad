@@ -7,36 +7,59 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write  # Required for creating releases and uploading artifacts
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      # Step 2: Install cross-compile dependencies
-      - name: Install MinGW-w64
+      - name: Install MinGW
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64
 
-      # Step 3: Build NotepadLite
-      - name: Build NotepadLite
+      - name: Build
         run: make
 
-      # Step 4: Upload compiled binary
-      - name: Upload compiled binary
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-build
           path: build/bin/NotepadLite.exe
 
-      # Step 5: Set dynamic version for release (YY.MM.BUILD)
-      - name: Set version
+      - name: Fetch Latest Release Metadata
+        id: latest
+        run: |
+          DATA=$(curl -s \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest)
+
+          PUB_TIME=$(echo "$DATA" | jq -r '.published_at')
+          if [ "$PUB_TIME" = "null" ]; then
+            echo "LAST_RELEASE_EPOCH=0" >> $GITHUB_ENV
+          else
+            LAST_EPOCH=$(date -d "$PUB_TIME" +%s)
+            echo "LAST_RELEASE_EPOCH=$LAST_EPOCH" >> $GITHUB_ENV
+          fi
+
+      - name: Gate Release (5-Hour SLA)
+        id: gate
+        run: |
+          NOW=$(date +%s)
+          DIFF=$(( NOW - LAST_RELEASE_EPOCH ))
+          THRESHOLD=$(( 5 * 3600 ))
+
+          if [ $DIFF -lt $THRESHOLD ]; then
+            echo "blocked=true" >> $GITHUB_ENV
+          else
+            echo "blocked=false" >> $GITHUB_ENV
+          fi
+
+      - name: Set Version
         id: version
         run: |
           YY=$(date +'%y')
@@ -44,12 +67,11 @@ jobs:
           VERSION="v${YY}.${MM}.${GITHUB_RUN_NUMBER}"
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      # Step 6: Create GitHub release using existing release.txt
       - name: Create Release
+        if: env.blocked == 'false'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
           name: "NotepadLite Release ${{ env.VERSION }}"
           artifacts: build/bin/NotepadLite.exe
-          releaseNotes: |
-            $(cat D:/Progect/NotepadLite/release.txt)
+          bodyFile: release.txt
