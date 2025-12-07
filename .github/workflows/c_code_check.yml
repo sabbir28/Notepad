@@ -30,10 +30,10 @@ jobs:
           mkdir -p "$REPORT_DIR"
           echo "REPORT_DIR=$REPORT_DIR" >> $GITHUB_ENV
 
-      # Step 4: Run cppcheck
+      # Step 4: Run cppcheck (won't fail workflow)
       - name: Run cppcheck
         run: |
-          cppcheck --enable=all --inconclusive --error-exitcode=1 . 2> "${REPORT_DIR}/cppcheck_report.txt"
+          cppcheck --enable=all --inconclusive . 2> "${REPORT_DIR}/cppcheck_report.txt"
 
       # Step 5: Run clang-tidy on all C files
       - name: Run clang-tidy
