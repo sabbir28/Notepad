@@ -1,0 +1,62 @@
+name: C Code Analysis
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Install C analysis tools
+      - name: Install C tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang clang-tidy cppcheck zip
+
+      # Step 3: Create report folder with today's date
+      - name: Set report folder
+        id: report
+        run: |
+          TODAY=$(date +'%Y-%m-%d')
+          REPORT_DIR="reports_$TODAY"
+          mkdir -p "$REPORT_DIR"
+          echo "REPORT_DIR=$REPORT_DIR" >> $GITHUB_ENV
+
+      # Step 4: Run cppcheck
+      - name: Run cppcheck
+        run: |
+          cppcheck --enable=all --inconclusive --error-exitcode=1 . 2> "${REPORT_DIR}/cppcheck_report.txt"
+
+      # Step 5: Run clang-tidy on all C files
+      - name: Run clang-tidy
+        run: |
+          for file in $(find . -name "*.c"); do
+            clang-tidy "$file" -- -I. 2> "${REPORT_DIR}/clang_tidy_$(basename $file).txt"
+          done
+
+      # Step 6: Compile with warnings enabled (gcc)
+      - name: Compile with warnings
+        run: |
+          for file in $(find . -name "*.c"); do
+            gcc -Wall -Wextra -Wpedantic -c "$file" -o /dev/null 2> "${REPORT_DIR}/gcc_warnings_$(basename $file).txt"
+          done
+
+      # Step 7: Zip the reports
+      - name: Zip reports
+        run: |
+          zip -r "${REPORT_DIR}.zip" "$REPORT_DIR"
+
+      # Step 8: Upload reports as artifact
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: C-Code-Reports
+          path: "${REPORT_DIR}.zip"
