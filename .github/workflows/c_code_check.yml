@@ -1,62 +1,74 @@
-name: C Code Analysis
+name: Memory Leak Check from Latest Release
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
-  analyze:
-    runs-on: ubuntu-latest
+  memory_leak:
+    runs-on: windows-latest
 
     steps:
-      # Step 1: Checkout code
+      # Step 1: Checkout repository (needed for committing reports)
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Install C analysis tools
-      - name: Install C tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential clang clang-tidy cppcheck zip
+      # Step 2: Get latest release asset download URL
+      - name: Get latest release
+        id: get_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const latestRelease = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            const asset = latestRelease.data.assets.find(a => a.name.endsWith('.exe'));
+            return asset.browser_download_url;
+          result-encoding: string
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Step 3: Create report folder with today's date
-      - name: Set report folder
+      # Step 3: Download latest release binary
+      - name: Download NotepadLite.exe
+        run: |
+          Invoke-WebRequest -Uri "${{ steps.get_release.outputs.result }}" -OutFile "NotepadLite.exe"
+
+      # Step 4: Create report folder with today's date
+      - name: Create report folder
         id: report
         run: |
-          TODAY=$(date +'%Y-%m-%d')
-          REPORT_DIR="reports_$TODAY"
-          mkdir -p "$REPORT_DIR"
-          echo "REPORT_DIR=$REPORT_DIR" >> $GITHUB_ENV
+          $today = Get-Date -Format "yyyy-MM-dd"
+          $env:REPORT_DIR = "reports_$today"
+          New-Item -ItemType Directory -Path $env:REPORT_DIR
+          Write-Output "REPORT_DIR=$env:REPORT_DIR" >> $env:GITHUB_ENV
 
-      # Step 4: Run cppcheck (won't fail workflow)
-      - name: Run cppcheck
+      # Step 5: Download Dr. Memory (memory leak detector)
+      - name: Download Dr. Memory
         run: |
-          cppcheck --enable=all --inconclusive . 2> "${REPORT_DIR}/cppcheck_report.txt" || true
+          Invoke-WebRequest -Uri https://github.com/DynamoRIO/drmemory/releases/download/v2.4.0/drmemory-windows-2.4.0-1.zip -OutFile drmemory.zip
+          Expand-Archive drmemory.zip -DestinationPath drmemory
 
-      # Step 5: Run clang-tidy on all C files
-      - name: Run clang-tidy
+      # Step 6: Run NotepadLite.exe with Dr. Memory
+      - name: Run memory check
         run: |
-          for file in $(find . -name "*.c"); do
-            clang-tidy "$file" -- -Isrc 2> "${REPORT_DIR}/clang_tidy_$(basename $file).txt" || true
-          done
+          ./drmemory/drmemory/bin/drmemory.exe -batch -report_dir ${env:REPORT_DIR} NotepadLite.exe
 
-      # Step 6: Compile with warnings enabled (gcc)
-      - name: Compile with warnings
+      # Step 7: Commit reports to 'bugs' branch
+      - name: Commit reports to bugs branch
         run: |
-          for file in $(find . -name "*.c"); do
-            gcc -Wall -Wextra -Wpedantic -c "$file" -Isrc -o /dev/null 2> "${REPORT_DIR}/gcc_warnings_$(basename $file).txt" || true
-          done
-
-      # Step 7: Zip the reports
-      - name: Zip reports
-        run: |
-          zip -r "${REPORT_DIR}.zip" "$REPORT_DIR"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git checkout -B bugs
+          git add ${env:REPORT_DIR}
+          git commit -m "Memory leak report for $env:REPORT_DIR"
+          git push -u origin bugs --force
 
       # Step 8: Upload reports as artifact
       - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
-          name: C-Code-Reports
-          path: "${REPORT_DIR}.zip"
+          name: Memory-Leak-Reports
+          path: ${env:REPORT_DIR}
