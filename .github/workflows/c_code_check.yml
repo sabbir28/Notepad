@@ -1,74 +1,73 @@
-name: Memory Leak Check from Latest Release
+name: Build and Memory Check NotepadLite
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write  # Required for committing reports
 
 jobs:
-  memory_leak:
+  build_and_memory_check:
     runs-on: windows-latest
 
+    env:
+      REPORT_DIR: "reports_${{ github.run_id }}_${{ github.event_name }}"
+
     steps:
-      # Step 1: Checkout repository (needed for committing reports)
-      - name: Checkout repository
+      # Step 1: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Get latest release asset download URL
-      - name: Get latest release
-        id: get_release
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const latestRelease = await github.rest.repos.getLatestRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo
-            });
-            const asset = latestRelease.data.assets.find(a => a.name.endsWith('.exe'));
-            return asset.browser_download_url;
-          result-encoding: string
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Step 3: Download latest release binary
-      - name: Download NotepadLite.exe
+      # Step 2: Install MinGW-w64 (for building)
+      - name: Install MinGW
         run: |
-          Invoke-WebRequest -Uri "${{ steps.get_release.outputs.result }}" -OutFile "NotepadLite.exe"
+          choco install mingw -y
+        shell: powershell
 
-      # Step 4: Create report folder with today's date
+      # Step 3: Build NotepadLite
+      - name: Build NotepadLite
+        run: make
+        shell: bash
+
+      # Step 4: Create report directory
       - name: Create report folder
-        id: report
         run: |
-          $today = Get-Date -Format "yyyy-MM-dd"
-          $env:REPORT_DIR = "reports_$today"
-          New-Item -ItemType Directory -Path $env:REPORT_DIR
-          Write-Output "REPORT_DIR=$env:REPORT_DIR" >> $env:GITHUB_ENV
+          New-Item -ItemType Directory -Force -Path $env:REPORT_DIR
+        shell: powershell
 
-      # Step 5: Download Dr. Memory (memory leak detector)
-      - name: Download Dr. Memory
+      # Step 5: Run Dr. Memory on NotepadLite.exe
+      - name: Run Dr. Memory
+        shell: powershell
         run: |
-          Invoke-WebRequest -Uri https://github.com/DynamoRIO/drmemory/releases/download/cronbuild-2.6.20368/DrMemory-Windows-2.6.20368.zip -OutFile drmemory.zip
-          Expand-Archive drmemory.zip -DestinationPath drmemory
+          $exePath = "build\bin\NotepadLite.exe"
+          $drMemory = "drmemory\drmemory\bin\drmemory.exe"
 
-      # Step 6: Run NotepadLite.exe with Dr. Memory
-      - name: Run memory check
-        run: |
-          ./drmemory/drmemory/bin/drmemory.exe -batch -report_dir ${env:REPORT_DIR} NotepadLite.exe
+          if (-Not (Test-Path $exePath)) {
+            Write-Host "Executable not found. Downloading latest release..."
+            # Example: replace with actual URL or GitHub API call to get latest release
+            Invoke-WebRequest -Uri "https://github.com/sabbir28/Notepad/releases/latest/download/NotepadLite.exe" -OutFile $exePath
+          }
 
-      # Step 7: Commit reports to 'bugs' branch
+          Write-Host "Running Dr. Memory..."
+          & $drMemory -batch -report_dir $env:REPORT_DIR $exePath
+
+      # Step 6: Commit reports to a new branch
       - name: Commit reports to bugs branch
+        shell: powershell
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git checkout -B bugs
-          git add ${env:REPORT_DIR}
-          git commit -m "Memory leak report for $env:REPORT_DIR"
+          git add $env:REPORT_DIR
+          git commit -m "Memory leak reports for run $env:GITHUB_RUN_ID"
           git push -u origin bugs --force
 
-      # Step 8: Upload reports as artifact
-      - name: Upload reports
+      # Step 7: Upload reports as artifacts
+      - name: Upload memory reports
         uses: actions/upload-artifact@v4
         with:
-          name: Memory-Leak-Reports
-          path: ${env:REPORT_DIR}
+          name: Memory-Reports
+          path: ${{ env.REPORT_DIR }}
