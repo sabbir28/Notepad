@@ -1,4 +1,4 @@
-name: Build and Memory Check NotepadLite
+name: Memory Check NotepadLite
 
 on:
   push:
@@ -7,54 +7,48 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write  # Required for committing reports
+  contents: write  # Required to commit reports
 
 jobs:
-  build_and_memory_check:
+  memory_check:
     runs-on: windows-latest
 
     env:
-      REPORT_DIR: "reports_${{ github.run_id }}_${{ github.event_name }}"
+      REPORT_DIR: "reports_${{ github.run_id }}"
 
     steps:
       # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install MinGW-w64 (for building)
-      - name: Install MinGW
-        run: |
-          choco install mingw -y
-        shell: powershell
-
-      # Step 3: Build NotepadLite
-      - name: Build NotepadLite
-        run: make
-        shell: bash
-
-      # Step 4: Create report directory
+      # Step 2: Create report folder
       - name: Create report folder
+        shell: powershell
         run: |
           New-Item -ItemType Directory -Force -Path $env:REPORT_DIR
-        shell: powershell
 
-      # Step 5: Run Dr. Memory on NotepadLite.exe
+      # Step 3: Download latest release executable
+      - name: Download latest NotepadLite.exe
+        shell: powershell
+        run: |
+          $exePath = "$env:GITHUB_WORKSPACE\NotepadLite.exe"
+          Invoke-WebRequest -Uri "https://github.com/sabbir28/Notepad/releases/latest/download/NotepadLite.exe" -OutFile $exePath
+          Write-Host "Downloaded executable to $exePath"
+
+      # Step 4: Run Dr. Memory on the downloaded executable
       - name: Run Dr. Memory
         shell: powershell
         run: |
-          $exePath = "build\bin\NotepadLite.exe"
-          $drMemory = "drmemory\drmemory\bin\drmemory.exe"
-
-          if (-Not (Test-Path $exePath)) {
-            Write-Host "Executable not found. Downloading latest release..."
-            # Example: replace with actual URL or GitHub API call to get latest release
-            Invoke-WebRequest -Uri "https://github.com/sabbir28/Notepad/releases/latest/download/NotepadLite.exe" -OutFile $exePath
+          $drMemory = "$env:GITHUB_WORKSPACE\drmemory\drmemory\bin\drmemory.exe"
+          if (-Not (Test-Path $drMemory)) {
+            Write-Host "DrMemory not found, downloading..."
+            Invoke-WebRequest -Uri "https://github.com/DynamoRIO/drmemory/releases/latest/download/drmemory-windows.zip" -OutFile "drmemory.zip"
+            Expand-Archive drmemory.zip -DestinationPath "drmemory"
           }
-
           Write-Host "Running Dr. Memory..."
-          & $drMemory -batch -report_dir $env:REPORT_DIR $exePath
+          & $drMemory -batch -report_dir $env:REPORT_DIR $env:GITHUB_WORKSPACE\NotepadLite.exe
 
-      # Step 6: Commit reports to a new branch
+      # Step 5: Commit memory reports to bugs branch
       - name: Commit reports to bugs branch
         shell: powershell
         run: |
@@ -62,10 +56,10 @@ jobs:
           git config user.email "actions@github.com"
           git checkout -B bugs
           git add $env:REPORT_DIR
-          git commit -m "Memory leak reports for run $env:GITHUB_RUN_ID"
+          git commit -m "Memory leak reports run $env:GITHUB_RUN_ID"
           git push -u origin bugs --force
 
-      # Step 7: Upload reports as artifacts
+      # Step 6: Upload reports as artifact
       - name: Upload memory reports
         uses: actions/upload-artifact@v4
         with:
