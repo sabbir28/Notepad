@@ -20,7 +20,7 @@ NotepadLite is a streamlined, high-efficiency alternative to the native Windows 
 
 Leverage the most recent release package for streamlined deployment:
 👉 **Download Latest Build:**
-[https://github.com/sabbir28/NotepadLite/releases/latest](https://github.com/sabbir28/NotepadLite/releases/latest)
+[https://github.com/sabbir28/NotepadLite/releases/latest](https://github.com/sabbir28/Notepad/releases)
 
 ## Build Workflow (WSL + Makefile)
 
