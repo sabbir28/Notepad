@@ -60,7 +60,7 @@ BEGIN
         POPUP "Language"
         BEGIN
             MENUITEM "English", IDM_LANG_ENGLISH
-            MENUITEM "Bangla (বাংলা)", IDM_LANG_BANGLA
+            MENUITEM "Bangla (\\x09AC\\x09BE\\x0982\\x09B2\\x09BE)", IDM_LANG_BANGLA
         END
     END
 
