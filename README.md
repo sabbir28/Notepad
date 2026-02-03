@@ -79,6 +79,14 @@ make windows64
 ./build/bin/NotepadLite.exe
 ```
 
+### Windows helper script
+
+If you prefer a single command that validates dependencies and builds the Windows binary, use:
+
+```bash
+./scripts/build_windows.sh
+```
+
 Environment prerequisites:
 
 * WSL (Ubuntu recommended)
@@ -93,6 +101,14 @@ On Linux, the source builds a GTK-based GUI editor when GTK 3 dev packages are i
 sudo apt-get install -y build-essential pkg-config libgtk-3-dev
 make
 ./build/bin/NotepadLite [file]
+```
+
+### Linux helper script
+
+If you prefer a single command that validates dependencies and builds the Linux binary, use:
+
+```bash
+./scripts/build_linux.sh
 ```
 
 To force the console build even when GTK is installed:
