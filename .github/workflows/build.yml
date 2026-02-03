@@ -14,64 +14,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v3
 
-      - name: Install MinGW
+      - name: Install toolchain
         run: |
+          set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64 g++-mingw-w64 binutils-mingw-w64
+          sudo apt-get install -y \
+            gcc-mingw-w64 \
+            g++-mingw-w64 \
+            binutils-mingw-w64 \
+            jq
 
-      - name: Build
-        run: make
+      - name: Build binary
+        run: |
+          set -euo pipefail
+          make
 
-      - name: Upload Artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-build
           path: build/bin/NotepadLite.exe
 
-      - name: Fetch Latest Release Metadata
-        id: latest
+      - name: Fetch latest release metadata
         run: |
+          set -euo pipefail
           DATA=$(curl -s \
             -H "Accept: application/vnd.github+json" \
             https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest)
 
           PUB_TIME=$(echo "$DATA" | jq -r '.published_at')
           if [ "$PUB_TIME" = "null" ]; then
-            echo "LAST_RELEASE_EPOCH=0" >> $GITHUB_ENV
+            echo "LAST_RELEASE_EPOCH=0" >> "$GITHUB_ENV"
           else
-            LAST_EPOCH=$(date -d "$PUB_TIME" +%s)
-            echo "LAST_RELEASE_EPOCH=$LAST_EPOCH" >> $GITHUB_ENV
+            echo "LAST_RELEASE_EPOCH=$(date -d "$PUB_TIME" +%s)" >> "$GITHUB_ENV"
           fi
 
-      - name: Gate Release (5-Hour SLA)
-        id: gate
+      - name: Gate release (10-minute cooldown)
         run: |
+          set -euo pipefail
           NOW=$(date +%s)
           DIFF=$(( NOW - LAST_RELEASE_EPOCH ))
-          THRESHOLD=$(( 5 * 3600 ))
+          THRESHOLD=$(( 10 * 60 ))
 
-          if [ $DIFF -lt $THRESHOLD ]; then
-            echo "blocked=true" >> $GITHUB_ENV
+          if [ "$DIFF" -lt "$THRESHOLD" ]; then
+            echo "blocked=true" >> "$GITHUB_ENV"
           else
-            echo "blocked=false" >> $GITHUB_ENV
+            echo "blocked=false" >> "$GITHUB_ENV"
           fi
 
-      - name: Set Version
-        id: version
+      - name: Compute version
         run: |
-          YY=$(date +'%y')
-          MM=$(date +'%m')
-          VERSION="v${YY}.${MM}.${GITHUB_RUN_NUMBER}"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          set -euo pipefail
+          VERSION="v$(date +'%y.%m').${GITHUB_RUN_NUMBER}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      - name: Create Release
+      - name: Create GitHub release
         if: env.blocked == 'false'
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
-          name: "NotepadLite Release ${{ env.VERSION }}"
+          name: NotepadLite Release ${{ env.VERSION }}
           artifacts: build/bin/NotepadLite.exe
           bodyFile: release.txt
