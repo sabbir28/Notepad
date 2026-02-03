@@ -8,6 +8,7 @@ WINDOWS32_CC ?= i686-w64-mingw32-gcc
 WINDOWS32_WINDRES ?= i686-w64-mingw32-windres
 BUILD_ARCH ?= x64
 EXE_NAME ?= NotepadLite-$(BUILD_ARCH).exe
+ALIAS_NAME ?=
 
 # Compiler and Tools
 CC      := $(WINDOWS_CC)
@@ -58,6 +59,9 @@ $(RES_OBJ): $(RES) | $(OBJ_DIR)
 # Link executable
 $(BIN_DIR)/$(EXE_NAME): $(OBJ) $(RES_OBJ) | $(BIN_DIR)
 	$(CC) $(OBJ) $(RES_OBJ) $(LDFLAGS) -o $@
+ifneq ($(strip $(ALIAS_NAME)),)
+	cp $@ $(BIN_DIR)/$(ALIAS_NAME)
+endif
 
 # Create necessary directories
 $(OBJ_DIR) $(BIN_DIR):
@@ -71,7 +75,7 @@ clean:
 .PHONY: all clean windows32 windows64 windows
 
 windows64:
-	$(MAKE) CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) BUILD_ARCH=x64 EXE_NAME=NotepadLite-x64.exe all
+	$(MAKE) CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) BUILD_ARCH=x64 EXE_NAME=NotepadLite.exe ALIAS_NAME=NotepadLite-x64.exe all
 
 windows32:
 	$(MAKE) CC=$(WINDOWS32_CC) WINDRES=$(WINDOWS32_WINDRES) BUILD_ARCH=x86 EXE_NAME=NotepadLite-x86.exe all

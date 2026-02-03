@@ -72,6 +72,7 @@ cd NotepadLite
 make windows
 
 # Output binaries will appear in:
+./build/bin/NotepadLite.exe
 ./build/bin/NotepadLite-x64.exe
 ./build/bin/NotepadLite-x86.exe
 ```

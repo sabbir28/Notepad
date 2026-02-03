@@ -39,5 +39,6 @@ fi
 make windows
 
 echo "Build complete. Binaries located at:"
+echo "  build/bin/NotepadLite.exe"
 echo "  build/bin/NotepadLite-x64.exe"
 echo "  build/bin/NotepadLite-x86.exe"
