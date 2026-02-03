@@ -3,13 +3,15 @@
 # ===============================
 
 UNAME_S := $(shell uname -s)
+WINDOWS_CC ?= x86_64-w64-mingw32-gcc
+WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
 
 # Compiler and Tools
 ifeq ($(UNAME_S),Linux)
 CC      := gcc
 else
-CC      := i686-w64-mingw32-gcc
-WINDRES := i686-w64-mingw32-windres
+CC      := $(WINDOWS_CC)
+WINDRES := $(WINDOWS_WINDRES)
 endif
 
 # Directories
@@ -20,9 +22,9 @@ RES_DIR := resources
 
 # Source, Object, and Resource Files
 ifeq ($(UNAME_S),Linux)
-SRC := $(SRC_DIR)/main.c $(SRC_DIR)/file_io.c
+SRC := $(SRC_DIR)/main.c $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
 else
-SRC := $(SRC_DIR)/main.c $(SRC_DIR)/ui.c $(SRC_DIR)/file_io.c
+SRC := $(SRC_DIR)/main.c $(SRC_DIR)/ui.c $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
 endif
 OBJ := $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRC))
 RES := $(RES_DIR)/notepadlite.rc
@@ -88,4 +90,13 @@ clean:
 	rm -rf $(OBJ_DIR)/* $(BIN_DIR)/*
 
 # Phony targets
-.PHONY: all clean
+.PHONY: all clean windows64 linux32
+
+windows64:
+	$(MAKE) UNAME_S=Windows_NT CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) all
+
+linux32:
+	$(MAKE) UNAME_S=Linux CC=gcc \
+		CFLAGS='-Os -Wall -Wextra -Werror -m32 -ffunction-sections -fdata-sections -Iinclude' \
+		LDFLAGS='-m32 -Wl,--gc-sections' \
+		OBJ_DIR=build/obj32 BIN_DIR=build/bin32 all

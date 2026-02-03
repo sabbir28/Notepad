@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "ui.h"
 #include "file_io.h"
+#include "localization.h"
 
 static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void CreateStatusBarParts(void);
@@ -13,6 +14,7 @@ static void UpdateStatusBar(void);
 static void ResizeControls(HWND hwnd);
 static const WCHAR *GetDisplayNameFromPath(LPCWSTR path);
 static void OpenFileFromPath(HWND hwnd, LPCWSTR path);
+static void LocalizeMenu(HWND hwnd);
 
 // Global handles
 HWND g_hMainWnd   = NULL;
@@ -45,7 +47,7 @@ int ui_run(HINSTANCE hInst, int nCmdShow, LPCWSTR startup_path)
     if (!RegisterClassExW(&wc)) return -1;
 
     g_hMainWnd = CreateWindowExW(
-        0, CLASS_NAME, L"NotepadLite",
+        0, CLASS_NAME, loc_wstr(LOC_APP_TITLE),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 1000, 700,
         NULL, NULL, hInst, (LPVOID)startup_path);
@@ -70,7 +72,7 @@ int ui_run(HINSTANCE hInst, int nCmdShow, LPCWSTR startup_path)
 static const WCHAR *GetDisplayNameFromPath(LPCWSTR path)
 {
     if (!path || !path[0])
-        return L"NotepadLite";
+        return loc_wstr(LOC_APP_TITLE);
 
     const WCHAR *slash = wcsrchr(path, L'\\');
     const WCHAR *altSlash = wcsrchr(path, L'/');
@@ -143,6 +145,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         // Menu
         HMENU hMenu = LoadMenuW(pcs->hInstance, MAKEINTRESOURCEW(IDR_MYMENU));
         SetMenu(hwnd, hMenu);
+        LocalizeMenu(hwnd);
 
         DragAcceptFiles(hwnd, TRUE);
 
@@ -188,7 +191,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             SetWindowTextW(g_hEditor, L"");
             g_filePath[0] = L'\0';
             g_currentFileEncoding = ENC_UTF8;
-            SetWindowTextW(hwnd, L"NotepadLite");
+            SetWindowTextW(hwnd, loc_wstr(LOC_APP_TITLE));
             UpdateStatusBar();
             break;
 
@@ -263,6 +266,60 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
+static void LocalizeMenu(HWND hwnd)
+{
+    HMENU menu = GetMenu(hwnd);
+    if (!menu) {
+        return;
+    }
+
+    MENUITEMINFOW mii = {0};
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_STRING;
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_FILE);
+    SetMenuItemInfoW(menu, 0, TRUE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_EDIT);
+    SetMenuItemInfoW(menu, 1, TRUE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_VIEW);
+    SetMenuItemInfoW(menu, 2, TRUE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_NEW);
+    SetMenuItemInfoW(menu, IDM_FILE_NEW, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_OPEN);
+    SetMenuItemInfoW(menu, IDM_FILE_OPEN, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_SAVE);
+    SetMenuItemInfoW(menu, IDM_FILE_SAVE, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_SAVE_AS);
+    SetMenuItemInfoW(menu, IDM_FILE_SAVEAS, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_EXIT);
+    SetMenuItemInfoW(menu, IDM_FILE_EXIT, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_UNDO);
+    SetMenuItemInfoW(menu, IDM_EDIT_UNDO, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_CUT);
+    SetMenuItemInfoW(menu, IDM_EDIT_CUT, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_COPY);
+    SetMenuItemInfoW(menu, IDM_EDIT_COPY, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_PASTE);
+    SetMenuItemInfoW(menu, IDM_EDIT_PASTE, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_SELECT_ALL);
+    SetMenuItemInfoW(menu, IDM_EDIT_SELECT, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_ALWAYS_ON_TOP);
+    SetMenuItemInfoW(menu, IDM_TOGGLE_ALWAYSONTOP, FALSE, &mii);
+}
+
 // ------------------------------------------------------------------
 // Status bar helpers
 // ------------------------------------------------------------------
@@ -302,7 +359,7 @@ static void UpdateStatusBar(void)
     int col  = (int)(start - SendMessageW(g_hEditor, EM_LINEINDEX, line - 1, 0)) + 1;
 
     WCHAR buf[128];
-    swprintf_s(buf, _countof(buf), L"Ln %d, Col %d", line, col);
+    swprintf_s(buf, _countof(buf), loc_wstr(LOC_STATUS_LN_COL), line, col);
     SendMessageW(g_hStatusBar, SB_SETTEXTW, 0, (LPARAM)buf);
 
     // --- Part 1: File size ---
@@ -312,16 +369,16 @@ static void UpdateStatusBar(void)
     if (size >= 1024*1024)      { size /= (1024*1024); unit = L"MB"; }
     else if (size >= 1024)      { size /= 1024;       unit = L"KB"; }
 
-    swprintf_s(buf, _countof(buf), L"%.2f %s", size, unit);
+    swprintf_s(buf, _countof(buf), loc_wstr(LOC_STATUS_SIZE), size, unit);
     SendMessageW(g_hStatusBar, SB_SETTEXTW, 1, (LPARAM)buf);
 
     // --- Part 2: Encoding ---
-    const WCHAR *enc = L"Unknown";
+    const WCHAR *enc = loc_wstr(LOC_STATUS_ENCODING_UNKNOWN);
     switch (g_currentFileEncoding) {
-        case ENC_UTF8:      enc = L"UTF-8";      break;
-        case ENC_UTF16_LE:  enc = L"UTF-16 LE";  break;
-        case ENC_UTF16_BE:  enc = L"UTF-16 BE";  break;
-        case ENC_ANSI:      enc = L"ANSI";       break;
+        case ENC_UTF8:      enc = loc_wstr(LOC_STATUS_ENCODING_UTF8);      break;
+        case ENC_UTF16_LE:  enc = loc_wstr(LOC_STATUS_ENCODING_UTF16_LE);  break;
+        case ENC_UTF16_BE:  enc = loc_wstr(LOC_STATUS_ENCODING_UTF16_BE);  break;
+        case ENC_ANSI:      enc = loc_wstr(LOC_STATUS_ENCODING_ANSI);      break;
     }
     SendMessageW(g_hStatusBar, SB_SETTEXTW, 2, (LPARAM)enc);
 }
