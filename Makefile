@@ -8,7 +8,12 @@ WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
 
 # Compiler and Tools
 ifeq ($(UNAME_S),Linux)
+GTK_CFLAGS := $(shell pkg-config --cflags gtk+-3.0 2>/dev/null)
+GTK_LIBS := $(shell pkg-config --libs gtk+-3.0 2>/dev/null)
 CC      := gcc
+ifeq ($(strip $(GTK_CFLAGS)),)
+$(error gtk+-3.0 development files not found. Install libgtk-3-dev and pkg-config)
+endif
 else
 CC      := $(WINDOWS_CC)
 WINDRES := $(WINDOWS_WINDRES)
@@ -22,7 +27,7 @@ RES_DIR := resources
 
 # Source, Object, and Resource Files
 ifeq ($(UNAME_S),Linux)
-SRC := $(SRC_DIR)/main.c $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
+SRC := $(SRC_DIR)/main.c $(SRC_DIR)/linux_ui.c $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
 else
 SRC := $(SRC_DIR)/main.c $(SRC_DIR)/ui.c $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
 endif
@@ -34,8 +39,8 @@ RES_OBJ := $(OBJ_DIR)/notepadlite_res.o
 ifeq ($(UNAME_S),Linux)
 CFLAGS := -Os -Wall -Wextra -Werror \
           -ffunction-sections -fdata-sections \
-          -Iinclude
-LDFLAGS := -Wl,--gc-sections
+          -Iinclude $(GTK_CFLAGS)
+LDFLAGS := -Wl,--gc-sections $(GTK_LIBS)
 else
 CFLAGS := -Os -s -Wall -Wextra -Werror \
           -DUNICODE -D_UNICODE -municode \
@@ -97,6 +102,6 @@ windows64:
 
 linux32:
 	$(MAKE) UNAME_S=Linux CC=gcc \
-		CFLAGS='-Os -Wall -Wextra -Werror -m32 -ffunction-sections -fdata-sections -Iinclude' \
-		LDFLAGS='-m32 -Wl,--gc-sections' \
+		CFLAGS='-Os -Wall -Wextra -Werror -m32 -ffunction-sections -fdata-sections -Iinclude $(GTK_CFLAGS)' \
+		LDFLAGS='-m32 -Wl,--gc-sections $(GTK_LIBS)' \
 		OBJ_DIR=build/obj32 BIN_DIR=build/bin32 all
