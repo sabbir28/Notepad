@@ -6,12 +6,15 @@ WINDOWS_CC ?= x86_64-w64-mingw32-gcc
 WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
 WINDOWS32_CC ?= i686-w64-mingw32-gcc
 WINDOWS32_WINDRES ?= i686-w64-mingw32-windres
+LLVM_CC ?= clang
+LLVM_WINDRES ?= llvm-rc
 BUILD_ARCH ?= x64
 EXE_NAME ?= NotepadLite-$(BUILD_ARCH).exe
 ALIAS_NAME ?=
 
 WINDOWS32_AVAILABLE := $(shell command -v $(WINDOWS32_CC) >/dev/null 2>&1 && command -v $(WINDOWS32_WINDRES) >/dev/null 2>&1 && echo yes || echo no)
 WINDOWS64_AVAILABLE := $(shell command -v $(WINDOWS_CC) >/dev/null 2>&1 && command -v $(WINDOWS_WINDRES) >/dev/null 2>&1 && echo yes || echo no)
+LLVM_AVAILABLE := $(shell command -v $(LLVM_CC) >/dev/null 2>&1 && command -v $(LLVM_WINDRES) >/dev/null 2>&1 && echo yes || echo no)
 
 # Compiler and Tools
 CC      := $(WINDOWS_CC)
@@ -78,18 +81,29 @@ clean:
 .PHONY: all clean windows32 windows64 windows
 
 windows64:
+ifneq ($(TOOLCHAIN),llvm)
 	$(MAKE) CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) BUILD_ARCH=x64 EXE_NAME=NotepadLite.exe ALIAS_NAME=NotepadLite-x64.exe all
+else
+	$(MAKE) CC=$(LLVM_CC) WINDRES=$(LLVM_WINDRES) BUILD_ARCH=x64 EXE_NAME=NotepadLite.exe ALIAS_NAME=NotepadLite-x64.exe all
+endif
 
 windows32:
+ifneq ($(TOOLCHAIN),llvm)
 	$(MAKE) CC=$(WINDOWS32_CC) WINDRES=$(WINDOWS32_WINDRES) BUILD_ARCH=x86 EXE_NAME=NotepadLite-x86.exe all
+else
+	$(MAKE) CC=$(LLVM_CC) WINDRES=$(LLVM_WINDRES) BUILD_ARCH=x86 EXE_NAME=NotepadLite-x86.exe all
+endif
 
 windows:
 ifeq ($(WINDOWS32_AVAILABLE),yes)
 	$(MAKE) windows32
 else ifeq ($(WINDOWS64_AVAILABLE),yes)
 	$(MAKE) windows64
+else ifeq ($(LLVM_AVAILABLE),yes)
+	$(MAKE) windows64 TOOLCHAIN=llvm
 else
 	@echo "Error: MinGW-w64 toolchains not found (missing i686-w64-mingw32-gcc/windres and x86_64-w64-mingw32-gcc/windres)." >&2
+	@echo "LLVM option: install clang + llvm-rc (or llvm-windres) and run 'make windows64 TOOLCHAIN=llvm'." >&2
 	@echo "Install mingw-w64 (WSL/Ubuntu): sudo apt-get install -y mingw-w64" >&2
 	@exit 1
 endif
