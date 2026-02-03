@@ -40,7 +40,8 @@ typedef enum {
     LOC_ENTER_NEW_CONTENT,
     LOC_ALLOC_FAIL,
     LOC_WRITE_FAIL,
-    LOC_SAVED_BYTES
+    LOC_SAVED_BYTES,
+    LOC_KEY_COUNT
 } LocKey;
 
 void localization_init(void);

@@ -30,13 +30,32 @@ jobs:
       - name: Build binary
         run: |
           set -euo pipefail
-          make
+          mkdir -p build/logs
+          echo "BUILD_FAILED=false" >> "$GITHUB_ENV"
+          if ! make windows64 2>&1 | tee build/logs/build.log; then
+            echo "BUILD_FAILED=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Upload build logs
+        if: env.BUILD_FAILED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NotepadLite-build-logs
+          path: build/logs/build.log
+
+      - name: Fail if build failed
+        if: env.BUILD_FAILED == 'true'
+        run: |
+          echo "Build failed. See uploaded logs."
+          exit 1
 
       - name: Upload build artifact
+        if: env.BUILD_FAILED != 'true' && hashFiles('build/bin/NotepadLite.exe') != ''
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-build
           path: build/bin/NotepadLite.exe
+          if-no-files-found: ignore
 
       - name: Fetch latest release metadata
         run: |
@@ -72,7 +91,7 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Create GitHub release
-        if: env.blocked == 'false'
+        if: env.blocked == 'false' && env.BUILD_FAILED != 'true' && hashFiles('build/bin/NotepadLite.exe') != ''
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
