@@ -20,15 +20,11 @@ NotepadLite is a lightweight Windows text editor written in C. It focuses on fas
 * Document size (B/KB/MB).
 * Current encoding label.
 
-## Current limitations (what’s missing)
+## Current limitations
 
-These are intentional gaps or not-yet-implemented areas:
-* No search, replace, or go-to-line dialog.
-* No syntax highlighting or language modes.
-* No tabs or multi-document UI.
-* No autosave, crash recovery, or recent files list.
-* No print/export or PDF support.
-* No configurable line endings (CRLF/LF) or encoding picker UI.
+* Syntax highlighting is limited to basic C/C++ keyword coloring.
+* Recent files and autosave are stored locally per session.
+* PDF export depends on the system print-to-PDF driver availability.
 
 ## Localization & language support
 
