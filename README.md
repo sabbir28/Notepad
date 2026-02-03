@@ -10,6 +10,10 @@ NotepadLite is a lightweight Windows text editor written in C. It focuses on fas
 * Optional “Always on Top” toggle.
 * Drag-and-drop file open support.
 
+**Linux console mode**
+* Runs in the terminal (no GUI) and reads/writes UTF-8 text.
+* Prints existing file contents, then accepts new input until EOF (Ctrl-D).
+
 **File handling**
 * New, Open, Save, and Save As.
 * Encoding detection on open (UTF-8 BOM, UTF-16 LE/BE, ANSI fallback).
@@ -29,7 +33,7 @@ These are intentional gaps or not-yet-implemented areas:
 * No autosave, crash recovery, or recent files list.
 * No print/export or PDF support.
 * No configurable line endings (CRLF/LF) or encoding picker UI.
-* Windows-only (Win32 + RichEdit).
+* GUI is Windows-only (Win32 + RichEdit); Linux uses console mode.
 
 ## Suggested future features
 
@@ -48,7 +52,7 @@ Download the most recent release package:
 👉 **Download Latest Build:**  
 [https://github.com/sabbir28/NotepadLite/releases/latest](https://github.com/sabbir28/Notepad/releases)
 
-## Build workflow (WSL + Makefile)
+## Build workflow (Windows via WSL + Makefile)
 
 Execute a seamless cross-platform build pipeline through WSL:
 
@@ -69,6 +73,17 @@ Environment prerequisites:
 * WSL (Ubuntu recommended)
 * `mingw-w64` toolchain
 * `make` build utilities
+
+## Build workflow (Linux)
+
+On Linux, the same source builds a simple console editor:
+
+```bash
+make
+./build/bin/NotepadLite [file]
+```
+
+If no file is supplied, it writes to `notepad.txt` in the current directory.
 
 ## Installation
 

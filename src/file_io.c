@@ -1,6 +1,8 @@
 #include "file_io.h"
 #include <string.h>
 
+#ifdef _WIN32
+
 // ------------------------------
 // Detect BOM
 // ------------------------------
@@ -350,3 +352,129 @@ FILE_ENCODING file_detect_encoding(LPCWSTR filePath)
     // Default: ANSI
     return ENC_ANSI;
 }
+#else
+#include <stdio.h>
+#include <stdlib.h>
+
+static BOOL read_file_bytes(const char *filename, BYTE **outBuffer, DWORD *outSize)
+{
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
+        return FALSE;
+
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        fclose(fp);
+        return FALSE;
+    }
+    long size = ftell(fp);
+    if (size < 0) {
+        fclose(fp);
+        return FALSE;
+    }
+    rewind(fp);
+
+    if (size == 0) {
+        *outBuffer = NULL;
+        *outSize = 0;
+        fclose(fp);
+        return TRUE;
+    }
+
+    BYTE *buffer = (BYTE *)malloc((size_t)size);
+    if (!buffer) {
+        fclose(fp);
+        return FALSE;
+    }
+
+    size_t read = fread(buffer, 1, (size_t)size, fp);
+    fclose(fp);
+    if (read != (size_t)size) {
+        free(buffer);
+        return FALSE;
+    }
+
+    *outBuffer = buffer;
+    *outSize = (DWORD)size;
+    return TRUE;
+}
+
+BOOL file_read(HWND hwnd, LPCWSTR filename, LPWSTR *outBuffer, DWORD *outSize, FILE_ENCODING *detectedEncoding)
+{
+    (void)hwnd;
+
+    BYTE *buffer = NULL;
+    DWORD size = 0;
+    if (!read_file_bytes(filename, &buffer, &size))
+        return FALSE;
+
+    if (size == 0) {
+        char *empty = (char *)malloc(1);
+        if (!empty)
+            return FALSE;
+        empty[0] = '\0';
+        *outBuffer = empty;
+        if (outSize)
+            *outSize = 0;
+        if (detectedEncoding)
+            *detectedEncoding = ENC_UTF8;
+        return TRUE;
+    }
+
+    char *text = (char *)malloc((size_t)size + 1);
+    if (!text) {
+        free(buffer);
+        return FALSE;
+    }
+    memcpy(text, buffer, size);
+    text[size] = '\0';
+    free(buffer);
+
+    *outBuffer = text;
+    if (outSize)
+        *outSize = size;
+    if (detectedEncoding)
+        *detectedEncoding = ENC_UTF8;
+    return TRUE;
+}
+
+BOOL file_write(HWND hwnd, LPCWSTR filename, LPCWSTR buffer, DWORD size, FILE_ENCODING encoding)
+{
+    (void)hwnd;
+    (void)encoding;
+
+    FILE *fp = fopen(filename, "wb");
+    if (!fp)
+        return FALSE;
+
+    if (size == 0) {
+        fclose(fp);
+        return TRUE;
+    }
+
+    size_t written = fwrite(buffer, 1, size, fp);
+    fclose(fp);
+    return written == size;
+}
+
+BOOL file_open_dialog(HWND hwnd, LPWSTR outPath, DWORD maxLen)
+{
+    (void)hwnd;
+    if (outPath && maxLen > 0)
+        outPath[0] = '\0';
+    return FALSE;
+}
+
+BOOL file_save_dialog(HWND hwnd, LPWSTR outPath, DWORD maxLen)
+{
+    (void)hwnd;
+    if (outPath && maxLen > 0)
+        outPath[0] = '\0';
+    return FALSE;
+}
+
+FILE_ENCODING file_detect_encoding(LPCWSTR filePath)
+{
+    (void)filePath;
+    return ENC_UTF8;
+}
+#endif
