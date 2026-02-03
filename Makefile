@@ -80,4 +80,4 @@ windows64:
 windows32:
 	$(MAKE) CC=$(WINDOWS32_CC) WINDRES=$(WINDOWS32_WINDRES) BUILD_ARCH=x86 EXE_NAME=NotepadLite-x86.exe all
 
-windows: windows64 windows32
+windows: windows32

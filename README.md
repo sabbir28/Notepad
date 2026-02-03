@@ -20,15 +20,11 @@ NotepadLite is a lightweight Windows text editor written in C. It focuses on fas
 * Document size (B/KB/MB).
 * Current encoding label.
 
-## Current limitations (what’s missing)
+## Current limitations
 
-These are intentional gaps or not-yet-implemented areas:
-* No search, replace, or go-to-line dialog.
-* No syntax highlighting or language modes.
-* No tabs or multi-document UI.
-* No autosave, crash recovery, or recent files list.
-* No print/export or PDF support.
-* No configurable line endings (CRLF/LF) or encoding picker UI.
+* Syntax highlighting is limited to basic C/C++ keyword coloring.
+* Recent files and autosave are stored locally per session.
+* PDF export depends on the system print-to-PDF driver availability.
 
 ## Localization & language support
 
@@ -61,25 +57,23 @@ Download the most recent release package:
 
 ## Build workflow (Windows 7–11)
 
-NotepadLite targets Windows 7 through Windows 11. Build on Windows using MinGW-w64 (MSYS2) or a compatible MinGW toolchain that provides `make`, `gcc`, and `windres`.
+NotepadLite targets Windows 7 through Windows 11. Build on Windows using MinGW-w64 (MSYS2) or a compatible MinGW toolchain that provides `make`, `gcc`, and `windres`. The default build now targets 32-bit (x86) binaries.
 
 ```bash
 # Clone the repository
 git clone https://github.com/sabbir28/NotepadLite.git
 cd NotepadLite
 
-# Build using the provided Makefile (MinGW cross-compiler required)
-make windows
+# Build the 32-bit binary using the provided Makefile (MinGW cross-compiler required)
+make windows32
 
 # Output binaries will appear in:
-./build/bin/NotepadLite.exe
-./build/bin/NotepadLite-x64.exe
 ./build/bin/NotepadLite-x86.exe
 ```
 
 ### Windows helper script
 
-If you prefer a single command that validates dependencies and builds the Windows binaries (x64 + x86), use:
+If you prefer a single command that validates dependencies and builds the Windows binary (x86), use:
 
 ```bash
 ./scripts/build_windows.sh
@@ -89,7 +83,7 @@ Environment prerequisites:
 
 * MinGW-w64 toolchain (via MSYS2 or similar)
 * `make` build utilities
-* MinGW-w64 32-bit and 64-bit toolchains available on PATH
+* MinGW-w64 32-bit toolchain available on PATH
 
 ## Operations & deployment
 
