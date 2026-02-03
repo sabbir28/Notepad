@@ -10,10 +10,6 @@ NotepadLite is a lightweight Windows text editor written in C. It focuses on fas
 * Optional “Always on Top” toggle.
 * Drag-and-drop file open support.
 
-**Linux GUI**
-* GTK-based editor with menus, status bar, and a familiar editing surface.
-* Supports New, Open, Save, Save As, Cut/Copy/Paste, and Select All.
-
 **File handling**
 * New, Open, Save, and Save As.
 * Encoding detection on open (UTF-8 BOM, UTF-16 LE/BE, ANSI fallback).
@@ -63,9 +59,9 @@ Download the most recent release package:
 👉 **Download Latest Build:**  
 [https://github.com/sabbir28/NotepadLite/releases/latest](https://github.com/sabbir28/Notepad/releases)
 
-## Build workflow (Windows via WSL + Makefile)
+## Build workflow (Windows 7–11)
 
-Execute a seamless cross-platform build pipeline through WSL:
+NotepadLite targets Windows 7 through Windows 11. Build on Windows using MinGW-w64 (MSYS2) or a compatible MinGW toolchain that provides `make`, `gcc`, and `windres`.
 
 ```bash
 # Clone the repository
@@ -89,43 +85,8 @@ If you prefer a single command that validates dependencies and builds the Window
 
 Environment prerequisites:
 
-* WSL (Ubuntu recommended)
-* `mingw-w64` toolchain
+* MinGW-w64 toolchain (via MSYS2 or similar)
 * `make` build utilities
-
-## Build workflow (Linux)
-
-On Linux, the source builds a GTK-based GUI editor when GTK 3 dev packages are installed. If GTK is not available, it falls back to the console editor.
-
-```bash
-sudo apt-get install -y build-essential pkg-config libgtk-3-dev
-make
-./build/bin/NotepadLite [file]
-```
-
-### Linux helper script
-
-If you prefer a single command that validates dependencies and builds the Linux binary, use:
-
-```bash
-./scripts/build_linux.sh
-```
-
-To force the console build even when GTK is installed:
-
-```bash
-make USE_GTK=0
-```
-
-### Linux 32-bit build target
-
-To produce a 32-bit Linux executable (console by default):
-
-```bash
-sudo apt-get install -y build-essential pkg-config libgtk-3-dev
-make linux32
-./build/bin32/NotepadLite [file]
-```
 
 ## Operations & deployment
 
@@ -133,7 +94,7 @@ Operational expectations for localization, update scheduling (20-minute incremen
 
 ## Installation
 
-1. Download the latest build or compile via WSL using the Makefile.
+1. Download the latest build or compile on Windows using the Makefile.
 2. Place the executable in your preferred working path or integrate it system-wide.
 3. Launch and begin executing your editing workflows immediately.
 

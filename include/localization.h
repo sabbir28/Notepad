@@ -2,9 +2,7 @@
 #define LOCALIZATION_H
 
 #include <stdbool.h>
-#ifdef _WIN32
 #include <windows.h>
-#endif
 
 typedef enum {
     LOC_APP_TITLE,
@@ -32,17 +30,6 @@ typedef enum {
     LOC_MENU_LANGUAGE,
     LOC_MENU_LANG_ENGLISH,
     LOC_MENU_LANG_BANGLA,
-    LOC_LINUX_CONSOLE_TITLE,
-    LOC_USAGE,
-    LOC_USAGE_DETAIL,
-    LOC_USAGE_EOF,
-    LOC_NO_FILE,
-    LOC_CURRENT_CONTENTS,
-    LOC_END_OF_FILE,
-    LOC_ENTER_NEW_CONTENT,
-    LOC_ALLOC_FAIL,
-    LOC_WRITE_FAIL,
-    LOC_SAVED_BYTES,
     LOC_KEY_COUNT
 } LocKey;
 
@@ -50,10 +37,6 @@ void localization_init(void);
 void localization_set_bangla(bool enable);
 bool localization_is_bangla(void);
 
-#ifdef _WIN32
 const wchar_t *loc_wstr(LocKey key);
-#else
-const char *loc_str(LocKey key);
-#endif
 
 #endif
