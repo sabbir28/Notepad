@@ -1,4 +1,5 @@
 // NotepadLite Resource File
+#pragma code_page(65001)
 #include "resource.h"
 
 // Application Icon
