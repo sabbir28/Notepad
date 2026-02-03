@@ -4,6 +4,11 @@
 
 WINDOWS_CC ?= x86_64-w64-mingw32-gcc
 WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
+WINDOWS32_CC ?= i686-w64-mingw32-gcc
+WINDOWS32_WINDRES ?= i686-w64-mingw32-windres
+BUILD_ARCH ?= x64
+EXE_NAME ?= NotepadLite-$(BUILD_ARCH).exe
+ALIAS_NAME ?=
 
 # Compiler and Tools
 CC      := $(WINDOWS_CC)
@@ -11,7 +16,7 @@ WINDRES := $(WINDOWS_WINDRES)
 
 # Directories
 SRC_DIR := src
-OBJ_DIR := build/obj
+OBJ_DIR := build/obj/$(BUILD_ARCH)
 BIN_DIR := build/bin
 RES_DIR := resources
 
@@ -41,7 +46,7 @@ LDFLAGS := -s -municode -mwindows \
 # ===============================
 
 # Default target
-all: $(BIN_DIR)/NotepadLite.exe
+all: $(BIN_DIR)/$(EXE_NAME)
 
 # Compile C source files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
@@ -52,8 +57,11 @@ $(RES_OBJ): $(RES) | $(OBJ_DIR)
 	$(WINDRES) -Iinclude $< -O coff -o $@
 
 # Link executable
-$(BIN_DIR)/NotepadLite.exe: $(OBJ) $(RES_OBJ) | $(BIN_DIR)
+$(BIN_DIR)/$(EXE_NAME): $(OBJ) $(RES_OBJ) | $(BIN_DIR)
 	$(CC) $(OBJ) $(RES_OBJ) $(LDFLAGS) -o $@
+ifneq ($(strip $(ALIAS_NAME)),)
+	cp $@ $(BIN_DIR)/$(ALIAS_NAME)
+endif
 
 # Create necessary directories
 $(OBJ_DIR) $(BIN_DIR):
@@ -64,8 +72,12 @@ clean:
 	rm -rf $(OBJ_DIR)/* $(BIN_DIR)/*
 
 # Phony targets
-.PHONY: all clean windows64
+.PHONY: all clean windows32 windows64 windows
 
 windows64:
-	$(MAKE) clean
-	$(MAKE) CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) all
+	$(MAKE) CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) BUILD_ARCH=x64 EXE_NAME=NotepadLite.exe ALIAS_NAME=NotepadLite-x64.exe all
+
+windows32:
+	$(MAKE) CC=$(WINDOWS32_CC) WINDRES=$(WINDOWS32_WINDRES) BUILD_ARCH=x86 EXE_NAME=NotepadLite-x86.exe all
+
+windows: windows64 windows32

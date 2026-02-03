@@ -69,15 +69,17 @@ git clone https://github.com/sabbir28/NotepadLite.git
 cd NotepadLite
 
 # Build using the provided Makefile (MinGW cross-compiler required)
-make windows64
+make windows
 
-# Output binary will appear in:
+# Output binaries will appear in:
 ./build/bin/NotepadLite.exe
+./build/bin/NotepadLite-x64.exe
+./build/bin/NotepadLite-x86.exe
 ```
 
 ### Windows helper script
 
-If you prefer a single command that validates dependencies and builds the Windows binary, use:
+If you prefer a single command that validates dependencies and builds the Windows binaries (x64 + x86), use:
 
 ```bash
 ./scripts/build_windows.sh
@@ -87,6 +89,7 @@ Environment prerequisites:
 
 * MinGW-w64 toolchain (via MSYS2 or similar)
 * `make` build utilities
+* MinGW-w64 32-bit and 64-bit toolchains available on PATH
 
 ## Operations & deployment
 

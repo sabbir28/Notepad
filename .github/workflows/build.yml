@@ -26,66 +26,41 @@ jobs:
             gcc-mingw-w64 \
             g++-mingw-w64 \
             binutils-mingw-w64 \
-            jq \
-            libgtk-3-dev \
-            pkg-config
+            jq
 
-      - name: Build Linux binaries
-        run: |
-          set -euo pipefail
-          mkdir -p build/logs
-          make clean
-          if ! make 2>&1 | tee build/logs/linux-build.log; then
-            echo "LINUX_BUILD_FAILED=true" >> "$GITHUB_ENV"
-          else
-            cp build/bin/NotepadLite build/bin/NotepadLite-linux
-          fi
-          if ! make USE_GTK=0 2>&1 | tee build/logs/linux-console-build.log; then
-            echo "LINUX_CONSOLE_BUILD_FAILED=true" >> "$GITHUB_ENV"
-          else
-            cp build/bin/NotepadLite build/bin/NotepadLite-linux-console
-          fi
-
-      - name: Build Windows binary
+      - name: Build Windows binaries
         run: |
           set -euo pipefail
           mkdir -p build/logs
           make clean
           echo "BUILD_FAILED=false" >> "$GITHUB_ENV"
-          if ! make windows64 2>&1 | tee build/logs/build.log; then
+          if ! make windows 2>&1 | tee build/logs/build.log; then
             echo "BUILD_FAILED=true" >> "$GITHUB_ENV"
           fi
 
       - name: Upload build logs
-        if: env.BUILD_FAILED == 'true' || env.LINUX_BUILD_FAILED == 'true' || env.LINUX_CONSOLE_BUILD_FAILED == 'true'
+        if: env.BUILD_FAILED == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-build-logs
           path: build/logs
 
       - name: Fail if build failed
-        if: env.BUILD_FAILED == 'true' || env.LINUX_BUILD_FAILED == 'true' || env.LINUX_CONSOLE_BUILD_FAILED == 'true'
+        if: env.BUILD_FAILED == 'true'
         run: |
           echo "Build failed. See uploaded logs."
           exit 1
 
-      - name: Upload build artifact
+      - name: Upload Windows artifacts
         if: env.BUILD_FAILED != 'true' && hashFiles('build/bin/NotepadLite.exe') != ''
         uses: actions/upload-artifact@v4
         with:
           name: NotepadLite-build-windows
-          path: build/bin/NotepadLite.exe
-          if-no-files-found: ignore
-      
-      - name: Upload Linux artifacts
-        if: env.LINUX_BUILD_FAILED != 'true' && env.LINUX_CONSOLE_BUILD_FAILED != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: NotepadLite-build-linux
           path: |
-            build/bin/NotepadLite-linux
-            build/bin/NotepadLite-linux-console
-          if-no-files-found: warn
+            build/bin/NotepadLite.exe
+            build/bin/NotepadLite-x64.exe
+            build/bin/NotepadLite-x86.exe
+          if-no-files-found: ignore
 
       - name: Fetch latest release metadata
         run: |
@@ -121,13 +96,13 @@ jobs:
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Create GitHub release
-        if: env.blocked == 'false' && env.BUILD_FAILED != 'true' && env.LINUX_BUILD_FAILED != 'true' && env.LINUX_CONSOLE_BUILD_FAILED != 'true' && hashFiles('build/bin/NotepadLite.exe') != ''
+        if: env.blocked == 'false' && env.BUILD_FAILED != 'true' && hashFiles('build/bin/NotepadLite.exe') != ''
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ env.VERSION }}
           name: NotepadLite Release ${{ env.VERSION }}
           artifacts: |
             build/bin/NotepadLite.exe
-            build/bin/NotepadLite-linux
-            build/bin/NotepadLite-linux-console
+            build/bin/NotepadLite-x64.exe
+            build/bin/NotepadLite-x86.exe
           bodyFile: release.txt
