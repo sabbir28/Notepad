@@ -67,6 +67,9 @@ cd NotepadLite
 # Build the 32-bit binary using the provided Makefile (MinGW cross-compiler required)
 make windows32
 
+# Build using LLVM/clang + llvm-rc (useful if MinGW windres fails)
+make windows64 TOOLCHAIN=llvm
+
 # Output binaries will appear in:
 ./build/bin/NotepadLite-x86.exe
 ```

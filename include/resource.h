@@ -42,6 +42,7 @@
 
 #define IDD_GOTO_DIALOG         700
 #define IDC_GOTO_EDIT           701
+#define IDC_STATIC              -1
 
 // Resource IDs
 #define IDR_MYMENU          301
