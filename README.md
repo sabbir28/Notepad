@@ -35,6 +35,15 @@ These are intentional gaps or not-yet-implemented areas:
 * No configurable line endings (CRLF/LF) or encoding picker UI.
 * GUI is Windows-only (Win32 + RichEdit); Linux uses console mode.
 
+## Localization & language support
+
+Runtime language selection is supported for English (default) and Bangla (বাংলা):
+
+* Set `NOTEPADLITE_LANG=bn` (or `bn-BD`, `bangla`) to enable Bangla strings.
+* All UI labels, system messages, and console prompts are localized via a shared string table.
+
+For operational details, see `docs/operations.md`.
+
 ## Suggested future features
 
 If you want to extend NotepadLite, these are practical next steps:
@@ -62,10 +71,10 @@ git clone https://github.com/sabbir28/NotepadLite.git
 cd NotepadLite
 
 # Build using the provided Makefile (MinGW cross-compiler required)
-make
+make windows64
 
 # Output binary will appear in:
-./build/bin/notepad.exe
+./build/bin/NotepadLite.exe
 ```
 
 Environment prerequisites:
@@ -84,6 +93,19 @@ make
 ```
 
 If no file is supplied, it writes to `notepad.txt` in the current directory.
+
+### Linux 32-bit build target
+
+To produce a 32-bit Linux executable:
+
+```bash
+make linux32
+./build/bin32/NotepadLite [file]
+```
+
+## Operations & deployment
+
+Operational expectations for localization, update scheduling (20-minute incremental uploads), and platform deployment targets are documented in `docs/operations.md`.
 
 ## Installation
 
