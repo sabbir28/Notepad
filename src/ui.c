@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <richedit.h>
 #include <commctrl.h>
+#include <shellapi.h>
 #include <stdio.h>
 #include "ui.h"
 #include "file_io.h"
@@ -10,6 +11,8 @@ static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void CreateStatusBarParts(void);
 static void UpdateStatusBar(void);
 static void ResizeControls(HWND hwnd);
+static const WCHAR *GetDisplayNameFromPath(LPCWSTR path);
+static void OpenFileFromPath(HWND hwnd, LPCWSTR path);
 
 // Global handles
 HWND g_hMainWnd   = NULL;
@@ -64,6 +67,40 @@ int ui_run(HINSTANCE hInst, int nCmdShow, LPCWSTR startup_path)
     return (int)msg.wParam;
 }
 
+static const WCHAR *GetDisplayNameFromPath(LPCWSTR path)
+{
+    if (!path || !path[0])
+        return L"NotepadLite";
+
+    const WCHAR *slash = wcsrchr(path, L'\\');
+    const WCHAR *altSlash = wcsrchr(path, L'/');
+    const WCHAR *sep = slash;
+    if (altSlash && (!sep || altSlash > sep))
+        sep = altSlash;
+
+    return sep ? (sep + 1) : path;
+}
+
+static void OpenFileFromPath(HWND hwnd, LPCWSTR path)
+{
+    if (!path || !path[0])
+        return;
+
+    wcscpy_s(g_filePath, _countof(g_filePath), path);
+    FILE_ENCODING enc = file_detect_encoding(path);
+    LPWSTR buffer = NULL;
+    DWORD size = 0;
+    if (file_read(hwnd, path, &buffer, &size, &enc)) {
+        SetWindowTextW(g_hEditor, buffer);
+        g_currentFileEncoding = enc;
+        HeapFree(GetProcessHeap(), 0, buffer);
+        SetWindowTextW(hwnd, GetDisplayNameFromPath(path));
+    } else {
+        g_filePath[0] = L'\0';
+    }
+    UpdateStatusBar();
+}
+
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg)
@@ -107,19 +144,11 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         HMENU hMenu = LoadMenuW(pcs->hInstance, MAKEINTRESOURCEW(IDR_MYMENU));
         SetMenu(hwnd, hMenu);
 
+        DragAcceptFiles(hwnd, TRUE);
+
         // Open file passed on command line
         if (startupFile && startupFile[0]) {
-            wcscpy_s(g_filePath, _countof(g_filePath), startupFile);
-            FILE_ENCODING enc = file_detect_encoding(startupFile);
-            LPWSTR buffer = NULL;
-            DWORD size = 0;
-            if (file_read(hwnd, startupFile, &buffer, &size, &enc)) {
-                SetWindowTextW(g_hEditor, buffer);
-                g_currentFileEncoding = enc;
-                HeapFree(GetProcessHeap(), 0, buffer);
-            } else {
-                g_filePath[0] = L'\0';
-            }
+            OpenFileFromPath(hwnd, startupFile);
         }
 
         UpdateStatusBar();
@@ -135,6 +164,17 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     case WM_SIZE:
         ResizeControls(hwnd);
         return 0;
+
+    case WM_DROPFILES:
+    {
+        HDROP drop = (HDROP)wParam;
+        WCHAR path[MAX_PATH] = {0};
+        if (DragQueryFileW(drop, 0, path, _countof(path))) {
+            OpenFileFromPath(hwnd, path);
+        }
+        DragFinish(drop);
+        return 0;
+    }
 
     case WM_GETMINMAXINFO:
         ((MINMAXINFO*)lParam)->ptMinTrackSize.x = 500;
@@ -154,15 +194,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 
         case IDM_FILE_OPEN:
             if (file_open_dialog(hwnd, g_filePath, MAX_PATH)) {
-                FILE_ENCODING enc = file_detect_encoding(g_filePath);
-                LPWSTR buf = NULL;
-                DWORD sz = 0;
-                if (file_read(hwnd, g_filePath, &buf, &sz, &enc)) {
-                    SetWindowTextW(g_hEditor, buf);
-                    g_currentFileEncoding = enc;
-                    HeapFree(GetProcessHeap(), 0, buf);
-                    SetWindowTextW(hwnd, wcsrchr(g_filePath, L'\\') + 1);
-                }
+                OpenFileFromPath(hwnd, g_filePath);
             }
             UpdateStatusBar();
             break;
@@ -194,7 +226,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                     GetWindowTextW(g_hEditor, buf, len + 1);
                     if (file_write(hwnd, newPath, buf, len * sizeof(WCHAR), g_currentFileEncoding)) {
                         wcscpy_s(g_filePath, _countof(g_filePath), newPath);
-                        SetWindowTextW(hwnd, wcsrchr(newPath, L'\\') + 1);
+                        SetWindowTextW(hwnd, GetDisplayNameFromPath(newPath));
                     }
                     HeapFree(GetProcessHeap(), 0, buf);
                 }
