@@ -8,7 +8,14 @@ WINDOWS_WINDRES ?= x86_64-w64-mingw32-windres
 
 # Compiler and Tools
 ifeq ($(UNAME_S),Linux)
+GTK_CFLAGS := $(shell pkg-config --cflags gtk+-3.0 2>/dev/null)
+GTK_LIBS := $(shell pkg-config --libs gtk+-3.0 2>/dev/null)
 CC      := gcc
+ifeq ($(strip $(GTK_CFLAGS)),)
+USE_GTK ?= 0
+else
+USE_GTK ?= 1
+endif
 else
 CC      := $(WINDOWS_CC)
 WINDRES := $(WINDOWS_WINDRES)
@@ -22,7 +29,16 @@ RES_DIR := resources
 
 # Source, Object, and Resource Files
 ifeq ($(UNAME_S),Linux)
-SRC := $(SRC_DIR)/main.c $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
+ifeq ($(USE_GTK),1)
+LINUX_UI_SRC := $(SRC_DIR)/linux_ui.c
+LINUX_GTK_CFLAGS := $(GTK_CFLAGS) -DUSE_GTK
+LINUX_GTK_LDFLAGS := $(GTK_LIBS)
+else
+LINUX_UI_SRC := $(SRC_DIR)/linux_console.c
+LINUX_GTK_CFLAGS :=
+LINUX_GTK_LDFLAGS :=
+endif
+SRC := $(SRC_DIR)/main.c $(LINUX_UI_SRC) $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
 else
 SRC := $(SRC_DIR)/main.c $(SRC_DIR)/ui.c $(SRC_DIR)/file_io.c $(SRC_DIR)/localization.c
 endif
@@ -34,8 +50,8 @@ RES_OBJ := $(OBJ_DIR)/notepadlite_res.o
 ifeq ($(UNAME_S),Linux)
 CFLAGS := -Os -Wall -Wextra -Werror \
           -ffunction-sections -fdata-sections \
-          -Iinclude
-LDFLAGS := -Wl,--gc-sections
+          -Iinclude $(LINUX_GTK_CFLAGS)
+LDFLAGS := -Wl,--gc-sections $(LINUX_GTK_LDFLAGS)
 else
 CFLAGS := -Os -s -Wall -Wextra -Werror \
           -DUNICODE -D_UNICODE -municode \
@@ -96,7 +112,7 @@ windows64:
 	$(MAKE) UNAME_S=Windows_NT CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) all
 
 linux32:
-	$(MAKE) UNAME_S=Linux CC=gcc \
+	$(MAKE) UNAME_S=Linux CC=gcc USE_GTK=0 \
 		CFLAGS='-Os -Wall -Wextra -Werror -m32 -ffunction-sections -fdata-sections -Iinclude' \
 		LDFLAGS='-m32 -Wl,--gc-sections' \
 		OBJ_DIR=build/obj32 BIN_DIR=build/bin32 all
