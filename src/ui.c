@@ -58,6 +58,7 @@ static WCHAR g_findText[128] = {0};
 static WCHAR g_replaceText[128] = {0};
 static LINE_ENDING g_currentLineEnding = LINE_ENDING_CRLF;
 static WCHAR g_autosavePath[MAX_PATH] = {0};
+static FINDREPLACEW g_findReplace = {0};
 
 // Global handles
 HWND g_hMainWnd   = NULL;
