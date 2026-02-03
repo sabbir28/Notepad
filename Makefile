@@ -10,6 +10,9 @@ BUILD_ARCH ?= x64
 EXE_NAME ?= NotepadLite-$(BUILD_ARCH).exe
 ALIAS_NAME ?=
 
+WINDOWS32_AVAILABLE := $(shell command -v $(WINDOWS32_CC) >/dev/null 2>&1 && command -v $(WINDOWS32_WINDRES) >/dev/null 2>&1 && echo yes || echo no)
+WINDOWS64_AVAILABLE := $(shell command -v $(WINDOWS_CC) >/dev/null 2>&1 && command -v $(WINDOWS_WINDRES) >/dev/null 2>&1 && echo yes || echo no)
+
 # Compiler and Tools
 CC      := $(WINDOWS_CC)
 WINDRES := $(WINDOWS_WINDRES)
@@ -80,4 +83,13 @@ windows64:
 windows32:
 	$(MAKE) CC=$(WINDOWS32_CC) WINDRES=$(WINDOWS32_WINDRES) BUILD_ARCH=x86 EXE_NAME=NotepadLite-x86.exe all
 
-windows: windows32
+windows:
+ifeq ($(WINDOWS32_AVAILABLE),yes)
+	$(MAKE) windows32
+else ifeq ($(WINDOWS64_AVAILABLE),yes)
+	$(MAKE) windows64
+else
+	@echo "Error: MinGW-w64 toolchains not found (missing i686-w64-mingw32-gcc/windres and x86_64-w64-mingw32-gcc/windres)." >&2
+	@echo "Install mingw-w64 (WSL/Ubuntu): sudo apt-get install -y mingw-w64" >&2
+	@exit 1
+endif
