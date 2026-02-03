@@ -91,5 +91,6 @@ else ifeq ($(WINDOWS64_AVAILABLE),yes)
 else
 	@echo "Error: MinGW-w64 toolchains not found (missing i686-w64-mingw32-gcc/windres and x86_64-w64-mingw32-gcc/windres)." >&2
 	@echo "Install mingw-w64 (WSL/Ubuntu): sudo apt-get install -y mingw-w64" >&2
+	@echo "Install mingw-w64 (MSYS2): pacman -S --needed mingw-w64-i686-toolchain mingw-w64-x86_64-toolchain" >&2
 	@exit 1
 endif
