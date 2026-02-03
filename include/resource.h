@@ -13,6 +13,8 @@
 #define IDM_EDIT_UNDO          205
 #define IDM_FILE_SAVEAS        206
 #define IDM_TOGGLE_ALWAYSONTOP 207
+#define IDM_LANG_ENGLISH       208
+#define IDM_LANG_BANGLA        209
 
 // Resource IDs
 #define IDR_MYMENU          301

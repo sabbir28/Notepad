@@ -30,6 +30,12 @@ BEGIN
     POPUP "&View"
     BEGIN
         MENUITEM "&Always on Top\tCtrl+T", IDM_TOGGLE_ALWAYSONTOP
+        MENUITEM SEPARATOR
+        POPUP "Language"
+        BEGIN
+            MENUITEM "English", IDM_LANG_ENGLISH
+            MENUITEM "Bangla (বাংলা)", IDM_LANG_BANGLA
+        END
     END
 END
 

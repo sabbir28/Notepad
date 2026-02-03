@@ -247,6 +247,24 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
             break;
         }
 
+        case IDM_LANG_ENGLISH:
+            localization_set_bangla(false);
+            LocalizeMenu(hwnd);
+            if (g_filePath[0] == L'\0') {
+                SetWindowTextW(hwnd, loc_wstr(LOC_APP_TITLE));
+            }
+            UpdateStatusBar();
+            break;
+
+        case IDM_LANG_BANGLA:
+            localization_set_bangla(true);
+            LocalizeMenu(hwnd);
+            if (g_filePath[0] == L'\0') {
+                SetWindowTextW(hwnd, loc_wstr(LOC_APP_TITLE));
+            }
+            UpdateStatusBar();
+            break;
+
         case IDM_FILE_EXIT:
             DestroyWindow(hwnd);
             break;
@@ -318,6 +336,26 @@ static void LocalizeMenu(HWND hwnd)
 
     mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_ALWAYS_ON_TOP);
     SetMenuItemInfoW(menu, IDM_TOGGLE_ALWAYSONTOP, FALSE, &mii);
+
+    HMENU viewMenu = GetSubMenu(menu, 2);
+    if (viewMenu) {
+        mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_LANGUAGE);
+        SetMenuItemInfoW(viewMenu, 2, TRUE, &mii);
+    }
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_LANG_ENGLISH);
+    SetMenuItemInfoW(menu, IDM_LANG_ENGLISH, FALSE, &mii);
+
+    mii.dwTypeData = (LPWSTR)loc_wstr(LOC_MENU_LANG_BANGLA);
+    SetMenuItemInfoW(menu, IDM_LANG_BANGLA, FALSE, &mii);
+
+    if (localization_is_bangla()) {
+        CheckMenuItem(menu, IDM_LANG_BANGLA, MF_CHECKED);
+        CheckMenuItem(menu, IDM_LANG_ENGLISH, MF_UNCHECKED);
+    } else {
+        CheckMenuItem(menu, IDM_LANG_BANGLA, MF_UNCHECKED);
+        CheckMenuItem(menu, IDM_LANG_ENGLISH, MF_CHECKED);
+    }
 }
 
 // ------------------------------------------------------------------
