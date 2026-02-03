@@ -1,7 +1,26 @@
 #pragma once
-#include <windows.h>
 
-#define MAX_PATH_LEN 1024
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <stdint.h>
+#include <wchar.h>
+#ifndef MAX_PATH
+#include <limits.h>
+#define MAX_PATH PATH_MAX
+#endif
+typedef void* HWND;
+typedef uint32_t DWORD;
+typedef uint8_t BYTE;
+typedef int BOOL;
+typedef char WCHAR;
+typedef WCHAR* LPWSTR;
+typedef const WCHAR* LPCWSTR;
+#ifndef TRUE
+#define TRUE 1
+#define FALSE 0
+#endif
+#endif
 
 typedef enum {
     ENC_ANSI = 0,
