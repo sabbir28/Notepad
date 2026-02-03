@@ -6,6 +6,8 @@ NotepadLite supports runtime language selection for English (default) and Bangla
 
 * Set `NOTEPADLITE_LANG=bn` (or `bn-BD`, `bangla`) to enable Bangla strings.
 * English is the fallback when the variable is unset or has another value.
+* When `NOTEPADLITE_LANG` is unset, the app detects the OS locale and auto-enables Bangla for `bn` locales.
+* Custom translations can be provided via `NOTEPADLITE_LOCALE_FILE`, a UTF-8 `key=value` file (see `src/localization.c` for key names).
 * Windows UI uses Unicode `wchar_t` APIs; Linux console mode reads and writes UTF-8.
 
 ## Update & Upload Scheduling

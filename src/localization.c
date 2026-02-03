@@ -1,8 +1,48 @@
 #include "localization.h"
 
+static const char *kLocKeyNames[] = {
+    "APP_TITLE",
+    "STATUS_LN_COL",
+    "STATUS_SIZE",
+    "STATUS_ENCODING_UNKNOWN",
+    "STATUS_ENCODING_UTF8",
+    "STATUS_ENCODING_UTF16_LE",
+    "STATUS_ENCODING_UTF16_BE",
+    "STATUS_ENCODING_ANSI",
+    "MENU_FILE",
+    "MENU_NEW",
+    "MENU_OPEN",
+    "MENU_SAVE",
+    "MENU_SAVE_AS",
+    "MENU_EXIT",
+    "MENU_EDIT",
+    "MENU_UNDO",
+    "MENU_CUT",
+    "MENU_COPY",
+    "MENU_PASTE",
+    "MENU_SELECT_ALL",
+    "MENU_VIEW",
+    "MENU_ALWAYS_ON_TOP",
+    "LINUX_CONSOLE_TITLE",
+    "USAGE",
+    "USAGE_DETAIL",
+    "USAGE_EOF",
+    "NO_FILE",
+    "CURRENT_CONTENTS",
+    "END_OF_FILE",
+    "ENTER_NEW_CONTENT",
+    "ALLOC_FAIL",
+    "WRITE_FAIL",
+    "SAVED_BYTES"
+};
+
 #ifdef _WIN32
 #include <windows.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 typedef struct {
     LocKey key;
@@ -47,9 +87,107 @@ static const LocEntry kLocTable[] = {
 };
 
 static bool g_useBangla = false;
+static wchar_t *g_overrides[LOC_KEY_COUNT] = {0};
+
+static LocKey key_from_name(const char *name)
+{
+    for (size_t i = 0; i < LOC_KEY_COUNT; ++i) {
+        if (strcmp(kLocKeyNames[i], name) == 0) {
+            return (LocKey)i;
+        }
+    }
+    return LOC_KEY_COUNT;
+}
+
+static bool is_bangla_locale(const wchar_t *lang)
+{
+    if (!lang || !*lang) {
+        return false;
+    }
+    if (_wcsnicmp(lang, L"bn", 2) == 0) {
+        return true;
+    }
+    return _wcsnicmp(lang, L"bangla", 6) == 0;
+}
+
+static char *trim_whitespace(char *text)
+{
+    char *start = text;
+    while (*start && isspace((unsigned char)*start)) {
+        ++start;
+    }
+    if (*start == '\0') {
+        return start;
+    }
+    char *end = start + strlen(start) - 1;
+    while (end > start && isspace((unsigned char)*end)) {
+        --end;
+    }
+    end[1] = '\0';
+    return start;
+}
+
+static void set_override(LocKey key, const char *value)
+{
+    int len = MultiByteToWideChar(CP_UTF8, 0, value, -1, NULL, 0);
+    if (len <= 0) {
+        return;
+    }
+    wchar_t *wide = (wchar_t *)calloc((size_t)len, sizeof(wchar_t));
+    if (!wide) {
+        return;
+    }
+    MultiByteToWideChar(CP_UTF8, 0, value, -1, wide, len);
+    free(g_overrides[key]);
+    g_overrides[key] = wide;
+}
+
+static void load_locale_file(const wchar_t *path)
+{
+    FILE *file = _wfopen(path, L"rb");
+    if (!file) {
+        return;
+    }
+    char line[1024];
+    bool first_line = true;
+    while (fgets(line, (int)sizeof(line), file)) {
+        char *cursor = line;
+        if (first_line) {
+            if ((unsigned char)cursor[0] == 0xEF &&
+                (unsigned char)cursor[1] == 0xBB &&
+                (unsigned char)cursor[2] == 0xBF) {
+                cursor += 3;
+            }
+            first_line = false;
+        }
+        char *trimmed = trim_whitespace(cursor);
+        if (*trimmed == '\0' || *trimmed == '#' || *trimmed == ';') {
+            continue;
+        }
+        char *equals = strchr(trimmed, '=');
+        if (!equals) {
+            continue;
+        }
+        *equals = '\0';
+        char *key_name = trim_whitespace(trimmed);
+        char *value = trim_whitespace(equals + 1);
+        if (*key_name == '\0' || *value == '\0') {
+            continue;
+        }
+        LocKey key = key_from_name(key_name);
+        if (key == LOC_KEY_COUNT) {
+            continue;
+        }
+        set_override(key, value);
+    }
+    fclose(file);
+}
 
 static const wchar_t *lookup_entry(LocKey key)
 {
+    if (key < LOC_KEY_COUNT && g_overrides[key]) {
+        return g_overrides[key];
+    }
     for (size_t i = 0; i < sizeof(kLocTable) / sizeof(kLocTable[0]); ++i) {
         if (kLocTable[i].key == key) {
             return g_useBangla ? kLocTable[i].bn : kLocTable[i].en;
@@ -63,9 +201,19 @@ void localization_init(void)
     wchar_t lang[16] = {0};
     DWORD len = GetEnvironmentVariableW(L"NOTEPADLITE_LANG", lang, (DWORD)(sizeof(lang) / sizeof(lang[0])));
     if (len > 0) {
-        if (_wcsicmp(lang, L"bn") == 0 || _wcsicmp(lang, L"bn-BD") == 0 || _wcsicmp(lang, L"bangla") == 0) {
-            g_useBangla = true;
+        g_useBangla = is_bangla_locale(lang);
+    } else {
+        wchar_t locale_name[LOCALE_NAME_MAX_LENGTH] = {0};
+        if (GetUserDefaultLocaleName(locale_name, LOCALE_NAME_MAX_LENGTH)) {
+            g_useBangla = is_bangla_locale(locale_name);
         }
+    }
+
+    wchar_t locale_file[MAX_PATH] = {0};
+    DWORD file_len = GetEnvironmentVariableW(L"NOTEPADLITE_LOCALE_FILE", locale_file,
+                                             (DWORD)(sizeof(locale_file) / sizeof(locale_file[0])));
+    if (file_len > 0) {
+        load_locale_file(locale_file);
     }
 }
 
@@ -78,6 +226,8 @@ const wchar_t *loc_wstr(LocKey key)
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <ctype.h>
 
 typedef struct {
     LocKey key;
@@ -122,9 +272,108 @@ static const LocEntry kLocTable[] = {
 };
 
 static bool g_useBangla = false;
+static char *g_overrides[LOC_KEY_COUNT] = {0};
+
+static LocKey key_from_name(const char *name)
+{
+    for (size_t i = 0; i < LOC_KEY_COUNT; ++i) {
+        if (strcmp(kLocKeyNames[i], name) == 0) {
+            return (LocKey)i;
+        }
+    }
+    return LOC_KEY_COUNT;
+}
+
+static bool is_bangla_locale(const char *lang)
+{
+    if (!lang || !*lang) {
+        return false;
+    }
+    char lower[16];
+    size_t i = 0;
+    for (; i < sizeof(lower) - 1 && lang[i]; ++i) {
+        lower[i] = (char)tolower((unsigned char)lang[i]);
+    }
+    lower[i] = '\0';
+    if (strncmp(lower, "bn", 2) == 0) {
+        return true;
+    }
+    return strncmp(lower, "bangla", 6) == 0;
+}
+
+static char *trim_whitespace(char *text)
+{
+    char *start = text;
+    while (*start && isspace((unsigned char)*start)) {
+        ++start;
+    }
+    if (*start == '\0') {
+        return start;
+    }
+    char *end = start + strlen(start) - 1;
+    while (end > start && isspace((unsigned char)*end)) {
+        --end;
+    }
+    end[1] = '\0';
+    return start;
+}
+
+static void set_override(LocKey key, const char *value)
+{
+    char *copy = strdup(value);
+    if (!copy) {
+        return;
+    }
+    free(g_overrides[key]);
+    g_overrides[key] = copy;
+}
+
+static void load_locale_file(const char *path)
+{
+    FILE *file = fopen(path, "rb");
+    if (!file) {
+        return;
+    }
+    char line[1024];
+    bool first_line = true;
+    while (fgets(line, (int)sizeof(line), file)) {
+        char *cursor = line;
+        if (first_line) {
+            if ((unsigned char)cursor[0] == 0xEF &&
+                (unsigned char)cursor[1] == 0xBB &&
+                (unsigned char)cursor[2] == 0xBF) {
+                cursor += 3;
+            }
+            first_line = false;
+        }
+        char *trimmed = trim_whitespace(cursor);
+        if (*trimmed == '\0' || *trimmed == '#' || *trimmed == ';') {
+            continue;
+        }
+        char *equals = strchr(trimmed, '=');
+        if (!equals) {
+            continue;
+        }
+        *equals = '\0';
+        char *key_name = trim_whitespace(trimmed);
+        char *value = trim_whitespace(equals + 1);
+        if (*key_name == '\0' || *value == '\0') {
+            continue;
+        }
+        LocKey key = key_from_name(key_name);
+        if (key == LOC_KEY_COUNT) {
+            continue;
+        }
+        set_override(key, value);
+    }
+    fclose(file);
+}
 
 static const char *lookup_entry(LocKey key)
 {
+    if (key < LOC_KEY_COUNT && g_overrides[key]) {
+        return g_overrides[key];
+    }
     for (size_t i = 0; i < sizeof(kLocTable) / sizeof(kLocTable[0]); ++i) {
         if (kLocTable[i].key == key) {
             return g_useBangla ? kLocTable[i].bn : kLocTable[i].en;
@@ -136,11 +385,21 @@ static const char *lookup_entry(LocKey key)
 void localization_init(void)
 {
     const char *lang = getenv("NOTEPADLITE_LANG");
-    if (!lang) {
-        return;
+    if (!lang || !*lang) {
+        lang = getenv("LC_ALL");
     }
-    if (strcmp(lang, "bn") == 0 || strcmp(lang, "bn-BD") == 0 || strcmp(lang, "bangla") == 0) {
+    if (!lang || !*lang) {
+        lang = getenv("LC_MESSAGES");
+    }
+    if (!lang || !*lang) {
+        lang = getenv("LANG");
+    }
+    if (is_bangla_locale(lang)) {
         g_useBangla = true;
+    }
+    const char *locale_file = getenv("NOTEPADLITE_LOCALE_FILE");
+    if (locale_file && *locale_file) {
+        load_locale_file(locale_file);
     }
 }
 
