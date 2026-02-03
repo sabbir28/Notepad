@@ -8,6 +8,6 @@
 int ui_run(HINSTANCE hInst, int nCmdShow, LPCWSTR startup_path);
 
 /* Global editor handle for future features */
-extern HWND g_editor;
+extern HWND g_hEditor;
 
 #endif /* UI_H */

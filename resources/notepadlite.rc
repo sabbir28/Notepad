@@ -9,10 +9,25 @@ IDR_MYMENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&New\tCtrl+N",        IDM_FILE_NEW
+        MENUITEM "&New Tab\tCtrl+N",    IDM_FILE_NEW_TAB
+        MENUITEM "&Close Tab\tCtrl+W",  IDM_FILE_CLOSE_TAB
+        MENUITEM SEPARATOR
+        MENUITEM "&New Window",        IDM_FILE_NEW
         MENUITEM "&Open...\tCtrl+O",    IDM_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",       IDM_FILE_SAVE
         MENUITEM "Save &As...\tCtrl+Shift+S", IDM_FILE_SAVEAS
+        MENUITEM SEPARATOR
+        MENUITEM "&Print...\tCtrl+P",  IDM_FILE_PRINT
+        MENUITEM "Export &PDF...\tCtrl+Shift+P", IDM_FILE_EXPORT_PDF
+        MENUITEM SEPARATOR
+        POPUP "Recent Files"
+        BEGIN
+            MENUITEM "(Empty)", IDM_RECENT_FILE_BASE, GRAYED
+            MENUITEM "(Empty)", IDM_RECENT_FILE_BASE + 1, GRAYED
+            MENUITEM "(Empty)", IDM_RECENT_FILE_BASE + 2, GRAYED
+            MENUITEM "(Empty)", IDM_RECENT_FILE_BASE + 3, GRAYED
+            MENUITEM "(Empty)", IDM_RECENT_FILE_BASE + 4, GRAYED
+        END
         MENUITEM SEPARATOR
         MENUITEM "E&xit",               IDM_FILE_EXIT
     END
@@ -20,6 +35,10 @@ BEGIN
     POPUP "&Edit"
     BEGIN
         MENUITEM "&Undo\tCtrl+Z",       IDM_EDIT_UNDO
+        MENUITEM SEPARATOR
+        MENUITEM "&Find...\tCtrl+F",    IDM_EDIT_FIND
+        MENUITEM "&Replace...\tCtrl+H", IDM_EDIT_REPLACE
+        MENUITEM "&Go To...\tCtrl+G",   IDM_EDIT_GOTO
         MENUITEM SEPARATOR
         MENUITEM "Cu&t\tCtrl+X",        IDM_EDIT_CUT
         MENUITEM "&Copy\tCtrl+C",       IDM_EDIT_COPY
@@ -30,6 +49,12 @@ BEGIN
     POPUP "&View"
     BEGIN
         MENUITEM "&Always on Top\tCtrl+T", IDM_TOGGLE_ALWAYSONTOP
+        MENUITEM "Syntax &Highlighting", IDM_VIEW_SYNTAX_TOGGLE
+        POPUP "Language Mode"
+        BEGIN
+            MENUITEM "&Plain Text", IDM_VIEW_LANG_PLAIN
+            MENUITEM "&C/C++", IDM_VIEW_LANG_C
+        END
         MENUITEM SEPARATOR
         POPUP "Language"
         BEGIN
@@ -37,21 +62,56 @@ BEGIN
             MENUITEM "Bangla (বাংলা)", IDM_LANG_BANGLA
         END
     END
+
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Autosave", IDM_OPTIONS_AUTOSAVE
+        POPUP "Line Endings"
+        BEGIN
+            MENUITEM "&CRLF (Windows)", IDM_OPTIONS_LINE_CRLF
+            MENUITEM "&LF (Unix)", IDM_OPTIONS_LINE_LF
+        END
+        POPUP "Encoding"
+        BEGIN
+            MENUITEM "UTF-&8", IDM_OPTIONS_ENC_UTF8
+            MENUITEM "UTF-16 &LE", IDM_OPTIONS_ENC_UTF16LE
+            MENUITEM "UTF-16 &BE", IDM_OPTIONS_ENC_UTF16BE
+            MENUITEM "&ANSI", IDM_OPTIONS_ENC_ANSI
+        END
+    END
 END
 
 // Accelerator Table
 IDR_ACCELERATORS ACCELERATORS
 BEGIN
-    "N", IDM_FILE_NEW,           VIRTKEY, CONTROL, NOINVERT
+    "N", IDM_FILE_NEW_TAB,       VIRTKEY, CONTROL, NOINVERT
+    "W", IDM_FILE_CLOSE_TAB,     VIRTKEY, CONTROL, NOINVERT
+    "N", IDM_FILE_NEW,           VIRTKEY, CONTROL, SHIFT, NOINVERT
     "O", IDM_FILE_OPEN,          VIRTKEY, CONTROL, NOINVERT
     "S", IDM_FILE_SAVE,          VIRTKEY, CONTROL, NOINVERT
     "S", IDM_FILE_SAVEAS,        VIRTKEY, CONTROL, SHIFT, NOINVERT   // Ctrl+Shift+S
+    "P", IDM_FILE_PRINT,         VIRTKEY, CONTROL, NOINVERT
+    "P", IDM_FILE_EXPORT_PDF,    VIRTKEY, CONTROL, SHIFT, NOINVERT
     "Z", IDM_EDIT_UNDO,          VIRTKEY, CONTROL, NOINVERT
+    "F", IDM_EDIT_FIND,          VIRTKEY, CONTROL, NOINVERT
+    "H", IDM_EDIT_REPLACE,       VIRTKEY, CONTROL, NOINVERT
+    "G", IDM_EDIT_GOTO,          VIRTKEY, CONTROL, NOINVERT
     "X", IDM_EDIT_CUT,           VIRTKEY, CONTROL, NOINVERT
     "C", IDM_EDIT_COPY,          VIRTKEY, CONTROL, NOINVERT
     "V", IDM_EDIT_PASTE,         VIRTKEY, CONTROL, NOINVERT
     "A", IDM_EDIT_SELECT,        VIRTKEY, CONTROL, NOINVERT
     "T", IDM_TOGGLE_ALWAYSONTOP, VIRTKEY, CONTROL, NOINVERT   // Ctrl+T
+END
+
+IDD_GOTO_DIALOG DIALOG 0, 0, 200, 70
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU | DS_SETFONT
+CAPTION "Go To Line"
+FONT 9, "Segoe UI"
+BEGIN
+    LTEXT "Line number:", -1, 10, 10, 70, 12
+    EDITTEXT IDC_GOTO_EDIT, 85, 8, 95, 14, ES_NUMBER | WS_TABSTOP
+    DEFPUSHBUTTON "Go", IDOK, 45, 40, 50, 14
+    PUSHBUTTON "Cancel", IDCANCEL, 105, 40, 60, 14
 END
 
 // Version Information (MinGW-compatible)
