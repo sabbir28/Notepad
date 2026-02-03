@@ -6,6 +6,7 @@
 #else
 #include <stdio.h>
 #include <string.h>
+#include "linux_console.h"
 #include "linux_ui.h"
 #include "localization.h"
 #endif
@@ -61,6 +62,10 @@ int main(int argc, char **argv)
         path = argv[1];
     }
 
+#ifdef USE_GTK
     return linux_ui_run(argc, argv, path);
+#else
+    return linux_console_run(argc, argv, path);
+#endif
 }
 #endif

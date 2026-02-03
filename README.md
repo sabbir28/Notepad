@@ -87,7 +87,7 @@ Environment prerequisites:
 
 ## Build workflow (Linux)
 
-On Linux, the source builds a GTK-based GUI editor:
+On Linux, the source builds a GTK-based GUI editor when GTK 3 dev packages are installed. If GTK is not available, it falls back to the console editor.
 
 ```bash
 sudo apt-get install -y build-essential pkg-config libgtk-3-dev
@@ -95,9 +95,15 @@ make
 ./build/bin/NotepadLite [file]
 ```
 
+To force the console build even when GTK is installed:
+
+```bash
+make USE_GTK=0
+```
+
 ### Linux 32-bit build target
 
-To produce a 32-bit Linux executable:
+To produce a 32-bit Linux executable (console by default):
 
 ```bash
 sudo apt-get install -y build-essential pkg-config libgtk-3-dev
