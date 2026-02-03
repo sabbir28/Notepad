@@ -106,6 +106,7 @@ make USE_GTK=0
 To produce a 32-bit Linux executable (console by default):
 
 ```bash
+sudo apt-get install -y build-essential pkg-config libgtk-3-dev
 make linux32
 ./build/bin32/NotepadLite [file]
 ```
