@@ -9,7 +9,7 @@ NotepadLite supports runtime language selection for English (default) and Bangla
 * When `NOTEPADLITE_LANG` is unset, the app detects the OS locale and auto-enables Bangla for `bn` locales.
 * Custom translations can be provided via `NOTEPADLITE_LOCALE_FILE`, a UTF-8 `key=value` file (see `src/localization.c` for key names).
 * The Windows UI exposes a View → Language toggle for English/Bangla runtime switching.
-* Windows UI uses Unicode `wchar_t` APIs; Linux console mode reads and writes UTF-8.
+* Windows UI uses Unicode `wchar_t` APIs.
 
 ## Update & Upload Scheduling
 
@@ -25,9 +25,8 @@ Operational guidelines:
 
 ## Platform Deployment Targets
 
-Two standalone artifacts are required:
+One standalone artifact is required:
 
 * Windows 64-bit executable
-* Linux 32-bit executable
 
 Build commands are listed in the repository README along with QA expectations.
