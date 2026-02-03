@@ -109,6 +109,7 @@ clean:
 .PHONY: all clean windows64 linux32
 
 windows64:
+	$(MAKE) clean
 	$(MAKE) UNAME_S=Windows_NT CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) all
 
 linux32:

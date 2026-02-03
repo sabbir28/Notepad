@@ -50,6 +50,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/logs
+          make clean
           echo "BUILD_FAILED=false" >> "$GITHUB_ENV"
           if ! make windows64 2>&1 | tee build/logs/build.log; then
             echo "BUILD_FAILED=true" >> "$GITHUB_ENV"

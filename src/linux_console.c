@@ -9,6 +9,7 @@
 int linux_console_run(int argc, char **argv, const char *startup_path)
 {
     (void)argc;
+    (void)argv;
     const char *path = startup_path;
 
     if (!path) {

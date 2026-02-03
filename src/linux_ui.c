@@ -449,9 +449,11 @@ int linux_ui_run(int argc, char **argv, const char *startup_path)
     state.text_view = gtk_text_view_new();
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(state.text_view), GTK_WRAP_NONE);
     gtk_text_view_set_monospace(GTK_TEXT_VIEW(state.text_view), TRUE);
-    PangoFontDescription *font = pango_font_description_from_string("Monospace 11");
-    gtk_widget_override_font(state.text_view, font);
-    pango_font_description_free(font);
+    GtkCssProvider *provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(provider, "textview { font-family: monospace; font-size: 11pt; }", -1, NULL);
+    GtkStyleContext *context = gtk_widget_get_style_context(state.text_view);
+    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    g_object_unref(provider);
 
     GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
