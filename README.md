@@ -42,6 +42,7 @@ Runtime language selection is supported for English (default) and Bangla (বা
 * Set `NOTEPADLITE_LANG=bn` (or `bn-BD`, `bangla`) to enable Bangla strings.
 * If `NOTEPADLITE_LANG` is not set, the app falls back to the OS locale (e.g., `bn` will auto-enable Bangla).
 * To provide your own translations, point `NOTEPADLITE_LOCALE_FILE` at a UTF-8 `key=value` file using keys like `APP_TITLE`, `MENU_FILE`, and `STATUS_LN_COL` (see `src/localization.c` for the full list).
+* In the Windows UI, use **View → Language** to switch between English and Bangla at runtime.
 * All UI labels, system messages, and console prompts are localized via a shared string table.
 
 For operational details, see `docs/operations.md`.

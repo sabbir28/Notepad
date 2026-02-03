@@ -23,6 +23,9 @@ static const char *kLocKeyNames[] = {
     "MENU_SELECT_ALL",
     "MENU_VIEW",
     "MENU_ALWAYS_ON_TOP",
+    "MENU_LANGUAGE",
+    "MENU_LANG_ENGLISH",
+    "MENU_LANG_BANGLA",
     "LINUX_CONSOLE_TITLE",
     "USAGE",
     "USAGE_DETAIL",
@@ -73,6 +76,9 @@ static const LocEntry kLocTable[] = {
     { LOC_MENU_SELECT_ALL, L"Select &All\tCtrl+A", L"সব &নির্বাচন\tCtrl+A" },
     { LOC_MENU_VIEW, L"&View", L"&ভিউ" },
     { LOC_MENU_ALWAYS_ON_TOP, L"&Always on Top\tCtrl+T", L"&সবসময় উপরে\tCtrl+T" },
+    { LOC_MENU_LANGUAGE, L"&Language", L"&ভাষা" },
+    { LOC_MENU_LANG_ENGLISH, L"&English", L"&ইংরেজি" },
+    { LOC_MENU_LANG_BANGLA, L"&Bangla (বাংলা)", L"&বাংলা" },
     { LOC_LINUX_CONSOLE_TITLE, L"NotepadLite (Linux console mode)", L"নোটপ্যাড লাইট (লিনাক্স কনসোল মোড)" },
     { LOC_USAGE, L"Usage: %s [file]", L"ব্যবহার: %s [file]" },
     { LOC_USAGE_DETAIL, L"If a file is provided, it will be loaded and then overwritten with new input.", L"একটি ফাইল দিলে সেটি লোড হবে এবং নতুন ইনপুট দিয়ে ওভাররাইট হবে।" },
@@ -222,6 +228,16 @@ const wchar_t *loc_wstr(LocKey key)
     return lookup_entry(key);
 }
 
+void localization_set_bangla(bool enable)
+{
+    g_useBangla = enable;
+}
+
+bool localization_is_bangla(void)
+{
+    return g_useBangla;
+}
+
 #else
 #include <stdlib.h>
 #include <string.h>
@@ -258,6 +274,9 @@ static const LocEntry kLocTable[] = {
     { LOC_MENU_SELECT_ALL, "Select &All\tCtrl+A", "সব &নির্বাচন\tCtrl+A" },
     { LOC_MENU_VIEW, "&View", "&ভিউ" },
     { LOC_MENU_ALWAYS_ON_TOP, "&Always on Top\tCtrl+T", "&সবসময় উপরে\tCtrl+T" },
+    { LOC_MENU_LANGUAGE, "&Language", "&ভাষা" },
+    { LOC_MENU_LANG_ENGLISH, "&English", "&ইংরেজি" },
+    { LOC_MENU_LANG_BANGLA, "&Bangla (বাংলা)", "&বাংলা" },
     { LOC_LINUX_CONSOLE_TITLE, "NotepadLite (Linux console mode)", "নোটপ্যাড লাইট (লিনাক্স কনসোল মোড)" },
     { LOC_USAGE, "Usage: %s [file]", "ব্যবহার: %s [file]" },
     { LOC_USAGE_DETAIL, "If a file is provided, it will be loaded and then overwritten with new input.", "একটি ফাইল দিলে সেটি লোড হবে এবং নতুন ইনপুট দিয়ে ওভাররাইট হবে।" },
@@ -406,5 +425,15 @@ void localization_init(void)
 const char *loc_str(LocKey key)
 {
     return lookup_entry(key);
+}
+
+void localization_set_bangla(bool enable)
+{
+    g_useBangla = enable;
+}
+
+bool localization_is_bangla(void)
+{
+    return g_useBangla;
 }
 #endif
