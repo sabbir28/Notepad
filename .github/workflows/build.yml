@@ -24,18 +24,18 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           update: true
+          msystem: MINGW64
           install: >-
             base-devel
             make
-            mingw-w64-i686-gcc
-            mingw-w64-x86_64-gcc
-            mingw-w64-i686-binutils
-            mingw-w64-x86_64-binutils
+            mingw-w64-i686-toolchain
+            mingw-w64-x86_64-toolchain
             jq
 
       - name: Build Windows binaries
         run: |
           set -euo pipefail
+          export PATH="/mingw32/bin:/mingw64/bin:$PATH"
           mkdir -p build/logs
           make clean
           echo "BUILD_FAILED=false" >> "$GITHUB_ENV"
