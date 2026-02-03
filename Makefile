@@ -78,10 +78,22 @@ clean:
 .PHONY: all clean windows32 windows64 windows
 
 windows64:
+ifeq ($(WINDOWS64_AVAILABLE),yes)
 	$(MAKE) CC=$(WINDOWS_CC) WINDRES=$(WINDOWS_WINDRES) BUILD_ARCH=x64 EXE_NAME=NotepadLite.exe ALIAS_NAME=NotepadLite-x64.exe all
+else
+	@echo "Error: 64-bit MinGW-w64 toolchain not found (missing x86_64-w64-mingw32-gcc/windres)." >&2
+	@echo "Install mingw-w64 (WSL/Ubuntu): sudo apt-get install -y mingw-w64" >&2
+	@exit 1
+endif
 
 windows32:
+ifeq ($(WINDOWS32_AVAILABLE),yes)
 	$(MAKE) CC=$(WINDOWS32_CC) WINDRES=$(WINDOWS32_WINDRES) BUILD_ARCH=x86 EXE_NAME=NotepadLite-x86.exe all
+else
+	@echo "Error: 32-bit MinGW-w64 toolchain not found (missing i686-w64-mingw32-gcc/windres)." >&2
+	@echo "Install mingw-w64 (WSL/Ubuntu): sudo apt-get install -y mingw-w64" >&2
+	@exit 1
+endif
 
 windows:
 ifeq ($(WINDOWS32_AVAILABLE),yes)
