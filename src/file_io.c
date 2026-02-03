@@ -114,6 +114,22 @@ BOOL file_read(HWND hwnd, LPCWSTR filename, LPWSTR *outBuffer, DWORD *outSize, F
         return FALSE;
     }
 
+    if (fileSize == 0)
+    {
+        LPWSTR empty = (LPWSTR)GlobalAlloc(GPTR, sizeof(WCHAR));
+        if (!empty)
+        {
+            CloseHandle(hFile);
+            return FALSE;
+        }
+        empty[0] = L'\0';
+        if (detectedEncoding) *detectedEncoding = ENC_ANSI;
+        if (outSize) *outSize = 0;
+        *outBuffer = empty;
+        CloseHandle(hFile);
+        return TRUE;
+    }
+
     BYTE* buffer = (BYTE*)GlobalAlloc(GPTR, fileSize);
     if (!buffer)
     {
@@ -150,14 +166,14 @@ BOOL file_write(HWND hwnd, LPCWSTR filename, LPCWSTR buffer, DWORD size, FILE_EN
                                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) return FALSE;
 
-    BOOL success = FALSE;
+    BOOL success = TRUE;
 
     switch (encoding)
     {
         case ENC_UTF8:
         {
             BYTE bom[] = {0xEF,0xBB,0xBF};
-            WriteFile(hFile, bom, sizeof(bom), NULL, NULL);
+            success = WriteFile(hFile, bom, sizeof(bom), NULL, NULL);
 
             int bytesNeeded = WideCharToMultiByte(CP_UTF8, 0, buffer, -1, NULL, 0, NULL, NULL);
             if (bytesNeeded > 0)
@@ -167,9 +183,17 @@ BOOL file_write(HWND hwnd, LPCWSTR filename, LPCWSTR buffer, DWORD size, FILE_EN
                 {
                     WideCharToMultiByte(CP_UTF8, 0, buffer, -1, (LPSTR)outBuf, bytesNeeded, NULL, NULL);
                     DWORD written;
-                    success = WriteFile(hFile, outBuf, bytesNeeded-1, &written, NULL);
+                    success = WriteFile(hFile, outBuf, bytesNeeded-1, &written, NULL) && (written == (DWORD)bytesNeeded - 1);
                     GlobalFree(outBuf);
                 }
+                else
+                {
+                    success = FALSE;
+                }
+            }
+            else
+            {
+                success = FALSE;
             }
             break;
         }
@@ -177,24 +201,27 @@ BOOL file_write(HWND hwnd, LPCWSTR filename, LPCWSTR buffer, DWORD size, FILE_EN
         case ENC_UTF16_LE:
         {
             BYTE bom[] = {0xFF, 0xFE};
-            WriteFile(hFile, bom, sizeof(bom), NULL, NULL);
+            success = WriteFile(hFile, bom, sizeof(bom), NULL, NULL);
             DWORD written;
-            success = WriteFile(hFile, buffer, size, &written, NULL) && (written == size);
+            success = success && WriteFile(hFile, buffer, size, &written, NULL) && (written == size);
             break;
         }
 
         case ENC_UTF16_BE:
         {
             BYTE bom[] = {0xFE, 0xFF};
-            WriteFile(hFile, bom, sizeof(bom), NULL, NULL);
+            success = WriteFile(hFile, bom, sizeof(bom), NULL, NULL);
             DWORD written;
             for (DWORD i=0; i<size/2; ++i)
             {
                 BYTE b[2];
                 b[0] = ((BYTE*)&buffer[i])[1];
                 b[1] = ((BYTE*)&buffer[i])[0];
-                success = WriteFile(hFile, b, 2, &written, NULL);
-                if (!success) break;
+                if (!WriteFile(hFile, b, 2, &written, NULL) || written != 2)
+                {
+                    success = FALSE;
+                    break;
+                }
             }
             break;
         }
@@ -210,9 +237,17 @@ BOOL file_write(HWND hwnd, LPCWSTR filename, LPCWSTR buffer, DWORD size, FILE_EN
                 {
                     WideCharToMultiByte(CP_ACP, 0, buffer, -1, (LPSTR)outBuf, bytesNeeded, NULL, NULL);
                     DWORD written;
-                    success = WriteFile(hFile, outBuf, bytesNeeded-1, &written, NULL);
+                    success = WriteFile(hFile, outBuf, bytesNeeded-1, &written, NULL) && (written == (DWORD)bytesNeeded - 1);
                     GlobalFree(outBuf);
                 }
+                else
+                {
+                    success = FALSE;
+                }
+            }
+            else
+            {
+                success = FALSE;
             }
             break;
         }
@@ -235,6 +270,11 @@ BOOL file_open_dialog(HWND hwnd, LPWSTR outPath, DWORD maxLen)
     ofn.Flags       = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
     ofn.lpstrFilter = L"Text Files\0*.txt\0All Files\0*.*\0";
 
+    if (outPath && maxLen > 0)
+    {
+        outPath[0] = L'\0';
+    }
+
     return GetOpenFileNameW(&ofn);
 }
 
@@ -247,6 +287,11 @@ BOOL file_save_dialog(HWND hwnd, LPWSTR outPath, DWORD maxLen)
     ofn.nMaxFile    = maxLen;
     ofn.Flags       = OFN_OVERWRITEPROMPT;
     ofn.lpstrFilter = L"Text Files\0*.txt\0All Files\0*.*\0";
+
+    if (outPath && maxLen > 0)
+    {
+        outPath[0] = L'\0';
+    }
 
     return GetSaveFileNameW(&ofn);
 }

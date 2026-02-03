@@ -10,6 +10,7 @@ static LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 static void CreateStatusBarParts(void);
 static void UpdateStatusBar(void);
 static void ResizeControls(HWND hwnd);
+static const WCHAR *GetDisplayNameFromPath(LPCWSTR path);
 
 // Global handles
 HWND g_hMainWnd   = NULL;
@@ -62,6 +63,20 @@ int ui_run(HINSTANCE hInst, int nCmdShow, LPCWSTR startup_path)
         }
     }
     return (int)msg.wParam;
+}
+
+static const WCHAR *GetDisplayNameFromPath(LPCWSTR path)
+{
+    if (!path || !path[0])
+        return L"NotepadLite";
+
+    const WCHAR *slash = wcsrchr(path, L'\\');
+    const WCHAR *altSlash = wcsrchr(path, L'/');
+    const WCHAR *sep = slash;
+    if (altSlash && (!sep || altSlash > sep))
+        sep = altSlash;
+
+    return sep ? (sep + 1) : path;
 }
 
 static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -161,7 +176,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                     SetWindowTextW(g_hEditor, buf);
                     g_currentFileEncoding = enc;
                     HeapFree(GetProcessHeap(), 0, buf);
-                    SetWindowTextW(hwnd, wcsrchr(g_filePath, L'\\') + 1);
+                    SetWindowTextW(hwnd, GetDisplayNameFromPath(g_filePath));
                 }
             }
             UpdateStatusBar();
@@ -194,7 +209,7 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
                     GetWindowTextW(g_hEditor, buf, len + 1);
                     if (file_write(hwnd, newPath, buf, len * sizeof(WCHAR), g_currentFileEncoding)) {
                         wcscpy_s(g_filePath, _countof(g_filePath), newPath);
-                        SetWindowTextW(hwnd, wcsrchr(newPath, L'\\') + 1);
+                        SetWindowTextW(hwnd, GetDisplayNameFromPath(newPath));
                     }
                     HeapFree(GetProcessHeap(), 0, buf);
                 }
