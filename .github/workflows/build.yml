@@ -11,26 +11,31 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
 
-      - name: Install toolchain
-        run: |
-          set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            gcc-mingw-w64 \
-            g++-mingw-w64 \
-            binutils-mingw-w64 \
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: MINGW64
+          install: >-
+            base-devel
+            make
+            mingw-w64-i686-toolchain
+            mingw-w64-x86_64-toolchain
             jq
 
       - name: Build Windows binaries
         run: |
           set -euo pipefail
+          export PATH="/mingw32/bin:/mingw64/bin:$PATH"
           mkdir -p build/logs
           make clean
           echo "BUILD_FAILED=false" >> "$GITHUB_ENV"
